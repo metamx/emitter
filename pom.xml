@@ -7,9 +7,9 @@
     <name>emitter</name>
     <description>The event-emitter library for pushing events into Kafka</description>
     <scm>
-        <connection>scm:git:ssh://git@github.com/metamx/event-emitter-new.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/metamx/event-emitter-new.git</developerConnection>
-        <url>http://www.github.com/metamx/event-emitter-new</url>
+        <connection>scm:git:ssh://git@github.com/metamx/emitter.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/metamx/emitter.git</developerConnection>
+        <url>http://www.github.com/metamx/emitter</url>
     </scm>
 
     <properties>
