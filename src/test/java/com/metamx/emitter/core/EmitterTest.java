@@ -2,18 +2,13 @@ package com.metamx.emitter.core;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMultimap;
 import com.google.common.util.concurrent.Futures;
 import com.metamx.emitter.service.UnitEvent;
 import com.metamx.http.client.GoHandler;
 import com.metamx.http.client.GoHandlers;
 import com.metamx.http.client.MockHttpClient;
 import com.metamx.http.client.Request;
-import com.metamx.http.client.response.HttpResponseHandler;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.easymock.Capture;
-import org.easymock.EasyMock;
-import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -200,8 +195,6 @@ public class EmitterTest
   public void testFailedEmission() throws Exception
   {
     emitter = sizeBasedEmitter(1);
-
-    Capture<HttpResponseHandler<Object, Object>> handlerCapture = new Capture<HttpResponseHandler<Object, Object>>();
 
     httpClient.setGoHandler(
         new GoHandler()

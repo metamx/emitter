@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.metamx</groupId>
     <artifactId>event-emitter-new</artifactId>
-    <version>4.7.1-SNAPSHOT</version>
+    <version>0.0.1-SNAPSHOT</version>
     <name>event-emitter-new</name>
     <description>The event-emitter library for pushing events into Kafka</description>
     <scm>

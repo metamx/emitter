@@ -2,7 +2,6 @@ package com.metamx.emitter.service;
 
 import com.metamx.emitter.core.Emitter;
 import com.metamx.emitter.core.Event;
-import com.metamx.emitter.service.ServiceEventBuilder;
 
 import java.io.IOException;
 
