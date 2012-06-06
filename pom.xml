@@ -2,9 +2,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.metamx</groupId>
-    <artifactId>event-emitter-new</artifactId>
+    <artifactId>emitter</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>event-emitter-new</name>
+    <name>emitter</name>
     <description>The event-emitter library for pushing events into Kafka</description>
     <scm>
         <connection>scm:git:ssh://git@github.com/metamx/event-emitter-new.git</connection>
@@ -31,7 +31,7 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>10.0.1</version>
+            <version>11.0.2</version>
         </dependency>
         <dependency>
             <groupId>javax.validation</groupId>
