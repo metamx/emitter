@@ -265,7 +265,6 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
       }
       catch (Throwable e) {
         log.error(e, "Uncaught exception in EmittingRunnable.run()");
-        e.printStackTrace();
       }
 
       // Always reschedule, otherwise we all of a sudden don't emit anything.
