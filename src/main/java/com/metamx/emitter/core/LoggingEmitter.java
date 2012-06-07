@@ -34,19 +34,20 @@ public class LoggingEmitter implements Emitter
 {
   private final Logger log;
   private final Level level;
-  private static final ObjectMapper jsonMapper = new ObjectMapper();
+  private final ObjectMapper jsonMapper;
 
   private final AtomicBoolean started = new AtomicBoolean(false);
 
-  public LoggingEmitter(LoggingEmitterConfig config)
+  public LoggingEmitter(LoggingEmitterConfig config, ObjectMapper jsonMapper)
   {
-    this(new Logger(config.getLoggerClass()), Level.toLevel(config.getLogLevel()));
+    this(new Logger(config.getLoggerClass()), Level.toLevel(config.getLogLevel()), jsonMapper);
   }
 
-  public LoggingEmitter(Logger log, Level level)
+  public LoggingEmitter(Logger log, Level level, ObjectMapper jsonMapper)
   {
     this.log = log;
     this.level = level;
+    this.jsonMapper = jsonMapper;
   }
 
   @Override
@@ -157,7 +158,7 @@ public class LoggingEmitter implements Emitter
     }
   }
 
-  private enum Level {
+  public enum Level {
     TRACE,
     DEBUG,
     INFO,
