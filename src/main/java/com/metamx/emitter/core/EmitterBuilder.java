@@ -57,7 +57,7 @@ public class EmitterBuilder
     if (loggingEmitterConfig != null) {
       return buildLogging(objectMapper, lifecycle);
     }
-    if (httpEmitterConfig == null) {
+    if (httpEmitterConfig != null) {
       return buildHttp(httpClient, objectMapper, lifecycle);
     }
 
