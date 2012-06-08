@@ -78,7 +78,7 @@ public class Emitters
     Map<String, Object> loggingMap = Maps.newHashMap();
 
     loggingMap.put(
-        "loggingClass", props.getProperty("com.metamx.emitter.logging.class", LoggingEmitter.class.toString())
+        "loggerClass", props.getProperty("com.metamx.emitter.logging.class", LoggingEmitter.class.toString())
     );
     loggingMap.put(
         "logLevel", props.getProperty("com.metamx.emitter.logging.level", "debug")
