@@ -26,7 +26,7 @@ public class LoggingEmitterConfig
 {
   @NotNull
   @JsonProperty
-  private String loggerClass = LoggingEmitterConfig.class.toString();
+  private String loggerClass = LoggingEmitterConfig.class.getName();
 
   @NotNull
   @JsonProperty
