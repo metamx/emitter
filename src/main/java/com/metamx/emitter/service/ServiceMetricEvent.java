@@ -61,7 +61,7 @@ public class ServiceMetricEvent implements Event
       Number value
   )
   {
-    this.createdTime = createdTime;
+    this.createdTime = createdTime != null ? createdTime : new DateTime();
     this.service = service;
     this.host = host;
     this.user1 = user1;
@@ -96,7 +96,7 @@ public class ServiceMetricEvent implements Event
   )
   {
     this(
-        new DateTime(),
+        null,
         service,
         host,
         user1,
@@ -243,29 +243,7 @@ public class ServiceMetricEvent implements Event
         final Number value
     )
     {
-      return new ServiceEventBuilder<ServiceMetricEvent>()
-      {
-        @Override
-        public ServiceMetricEvent build(String service, String host)
-        {
-          return new ServiceMetricEvent(
-              service,
-              host,
-              user1,
-              user2,
-              user3,
-              user4,
-              user5,
-              user6,
-              user7,
-              user8,
-              user9,
-              user10,
-              metric,
-              value
-          );
-        }
-      };
+      return build(null, metric, value);
     }
 
     public ServiceEventBuilder<ServiceMetricEvent> build(
