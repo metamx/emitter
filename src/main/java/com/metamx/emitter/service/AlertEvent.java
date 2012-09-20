@@ -132,6 +132,7 @@ public class AlertEvent implements Event
     public static final Severity DEFAULT = COMPONENT_FAILURE;
   }
 
+  @Deprecated // Use AlertBuilder
   public static class Builder
   {
     private final Map<String, Object> dataMap = new HashMap<String, Object>();
@@ -142,6 +143,7 @@ public class AlertEvent implements Event
       return this;
     }
 
+    @Deprecated
     public ServiceEventBuilder<AlertEvent> build(
         final String description
     )
@@ -149,6 +151,7 @@ public class AlertEvent implements Event
       return build(Severity.DEFAULT, description, dataMap);
     }
 
+    @Deprecated
     public ServiceEventBuilder<AlertEvent> build(
         final String description,
         final Map<String, Object> dataMap
@@ -157,6 +160,7 @@ public class AlertEvent implements Event
       return build(Severity.DEFAULT, description, dataMap);
     }
 
+    @Deprecated
     public ServiceEventBuilder<AlertEvent> build(
         final Severity severity,
         final String description
@@ -165,6 +169,7 @@ public class AlertEvent implements Event
       return build(severity, description, dataMap);
     }
 
+    @Deprecated
     public ServiceEventBuilder<AlertEvent> build(
         final Severity severity,
         final String description,
