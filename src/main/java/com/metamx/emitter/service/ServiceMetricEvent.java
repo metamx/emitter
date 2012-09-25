@@ -167,19 +167,18 @@ public class ServiceMetricEvent implements Event
   @Override
   public Map<String, Object> toMap()
   {
-    Joiner joiner = Joiner.on("\u0001");
-    ImmutableMap.Builder<String, String> userDimsBuilder = ImmutableMap.builder();
-    if (user1  != null && user1.length  > 0) userDimsBuilder.put("user1",  joiner.join(user1));
-    if (user2  != null && user2.length  > 0) userDimsBuilder.put("user2",  joiner.join(user2));
-    if (user3  != null && user3.length  > 0) userDimsBuilder.put("user3",  joiner.join(user3));
-    if (user4  != null && user4.length  > 0) userDimsBuilder.put("user4",  joiner.join(user4));
-    if (user5  != null && user5.length  > 0) userDimsBuilder.put("user5",  joiner.join(user5));
-    if (user6  != null && user6.length  > 0) userDimsBuilder.put("user6",  joiner.join(user6));
-    if (user7  != null && user7.length  > 0) userDimsBuilder.put("user7",  joiner.join(user7));
-    if (user8  != null && user8.length  > 0) userDimsBuilder.put("user8",  joiner.join(user8));
-    if (user9  != null && user9.length  > 0) userDimsBuilder.put("user9",  joiner.join(user9));
-    if (user10 != null && user10.length > 0) userDimsBuilder.put("user10", joiner.join(user10));
-    Map<String, String> userDims = userDimsBuilder.build();
+    ImmutableMap.Builder<String, Object> userDimsBuilder = ImmutableMap.builder();
+    if (user1  != null) userDimsBuilder.put("user1",  user1);
+    if (user2  != null) userDimsBuilder.put("user2",  user2);
+    if (user3  != null) userDimsBuilder.put("user3",  user3);
+    if (user4  != null) userDimsBuilder.put("user4",  user4);
+    if (user5  != null) userDimsBuilder.put("user5",  user5);
+    if (user6  != null) userDimsBuilder.put("user6",  user6);
+    if (user7  != null) userDimsBuilder.put("user7",  user7);
+    if (user8  != null) userDimsBuilder.put("user8",  user8);
+    if (user9  != null) userDimsBuilder.put("user9",  user9);
+    if (user10 != null) userDimsBuilder.put("user10", user10);
+    Map<String, Object> userDims = userDimsBuilder.build();
 
     return ImmutableMap.<String, Object>builder()
         .put("feed", getFeed())
