@@ -22,6 +22,8 @@ import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Arrays;
+
 /**
  */
 public class ServiceMetricEventTest
@@ -64,22 +66,21 @@ public class ServiceMetricEventTest
         builderEvent.toMap()
     );
 
-    ServiceMetricEvent constructorEvent = new ServiceMetricEvent(
-        "test",
-        "localhost",
-        "a",
-        "b",
-        "c",
-        "d",
-        "e",
-        "f",
-        "g",
-        "h",
-        "i",
-        "j",
-        "test-metric",
-        1234
-    );
+    ServiceMetricEvent constructorEvent = ServiceMetricEvent
+        .builder()
+        .setUser1("a")
+        .setUser2("b")
+        .setUser3("c")
+        .setUser4("d")
+        .setUser5("e")
+        .setUser6("f")
+        .setUser7("g")
+        .setUser8("h")
+        .setUser9("i")
+        .setUser10("j")
+        .build("test-metric", 1234)
+        .build("test", "localhost");
+
     Assert.assertEquals(
         ImmutableMap.<String, Object>builder()
                     .put("feed", "metrics")
@@ -101,22 +102,21 @@ public class ServiceMetricEventTest
                     .build(), constructorEvent.toMap()
     );
 
-    ServiceMetricEvent arrayConstructorEvent = new ServiceMetricEvent(
-        "test",
-        "localhost",
-        new String[] { "a" },
-        new String[] { "b" },
-        new String[] { "c" },
-        new String[] { "d" },
-        new String[] { "e" },
-        new String[] { "f" },
-        new String[] { "g" },
-        new String[] { "h" },
-        new String[] { "i" },
-        new String[] { "j" },
-        "test-metric",
-        1234
-    );
+    ServiceMetricEvent arrayConstructorEvent = ServiceMetricEvent
+        .builder()
+        .setUser1(new String[] { "a" })
+        .setUser2(new String[]{"b"})
+        .setUser3(new String[]{"c"})
+        .setUser4(new String[]{"d"})
+        .setUser5(new String[]{"e"})
+        .setUser6(new String[]{"f"})
+        .setUser7(new String[]{"g"})
+        .setUser8(new String[]{"h"})
+        .setUser9(new String[]{"i"})
+        .setUser10(new String[]{"j"})
+        .build("test-metric", 1234)
+        .build("test", "localhost");
+
     Assert.assertEquals(
         ImmutableMap.<String, Object>builder()
                     .put("feed", "metrics")
@@ -124,53 +124,53 @@ public class ServiceMetricEventTest
                     .put("service", "test")
                     .put("host", "localhost")
                     .put("metric", "test-metric")
-                    .put("user1", "a")
-                    .put("user2", "b")
-                    .put("user3", "c")
-                    .put("user4", "d")
-                    .put("user5", "e")
-                    .put("user6", "f")
-                    .put("user7", "g")
-                    .put("user8", "h")
-                    .put("user9", "i")
-                    .put("user10", "j")
+                    .put("user1", Arrays.asList("a"))
+                    .put("user2", Arrays.asList("b"))
+                    .put("user3", Arrays.asList("c"))
+                    .put("user4", Arrays.asList("d"))
+                    .put("user5", Arrays.asList("e"))
+                    .put("user6", Arrays.asList("f"))
+                    .put("user7", Arrays.asList("g"))
+                    .put("user8", Arrays.asList("h"))
+                    .put("user9", Arrays.asList("i"))
+                    .put("user10", Arrays.asList("j"))
                     .put("value", 1234)
                     .build(), arrayConstructorEvent.toMap()
     );
 
-    Assert.assertNotNull(new ServiceMetricEvent.Builder()
-        .setUser1("a")
-        .setUser2("b")
-        .setUser3("c")
-        .setUser4("d")
-        .setUser5("e")
-        .setUser6("f")
-        .setUser7("g")
-        .setUser8("h")
-        .setUser9("i")
-        .setUser10("j")
-        .build(null, "test-metric", 1234)
-        .build("test", "localhost")
-        .getCreatedTime()
+    Assert.assertNotNull(
+        new ServiceMetricEvent.Builder()
+            .setUser1("a")
+            .setUser2("b")
+            .setUser3("c")
+            .setUser4("d")
+            .setUser5("e")
+            .setUser6("f")
+            .setUser7("g")
+            .setUser8("h")
+            .setUser9("i")
+            .setUser10("j")
+            .build(null, "test-metric", 1234)
+            .build("test", "localhost")
+            .getCreatedTime()
     );
 
-    Assert.assertNotNull(new ServiceMetricEvent(
-        null,
-        "test",
-        "localhost",
-        new String[] { "a" },
-        new String[] { "b" },
-        new String[] { "c" },
-        new String[] { "d" },
-        new String[] { "e" },
-        new String[] { "f" },
-        new String[] { "g" },
-        new String[] { "h" },
-        new String[] { "i" },
-        new String[] { "j" },
-        "test-metric",
-        1234
-    ).getCreatedTime());
+    Assert.assertNotNull(
+        ServiceMetricEvent.builder()
+                          .setUser1(new String[]{"a"})
+                          .setUser2(new String[]{"b"})
+                          .setUser3(new String[]{"c"})
+                          .setUser4(new String[]{"d"})
+                          .setUser5(new String[]{"e"})
+                          .setUser6(new String[]{"f"})
+                          .setUser7(new String[]{"g"})
+                          .setUser8(new String[]{"h"})
+                          .setUser9(new String[]{"i"})
+                          .setUser10(new String[]{"j"})
+                          .build("test-metric", 1234)
+                          .build("test", "localhost")
+                          .getCreatedTime()
+    );
 
     Assert.assertEquals(
         ImmutableMap.<String, Object>builder()
@@ -214,35 +214,32 @@ public class ServiceMetricEventTest
                     .put("service", "test")
                     .put("host", "localhost")
                     .put("metric", "test-metric")
-                    .put("user1", "a")
-                    .put("user2", "b")
-                    .put("user3", "c")
-                    .put("user4", "d")
-                    .put("user5", "e")
-                    .put("user6", "f")
-                    .put("user7", "g")
-                    .put("user8", "h")
-                    .put("user9", "i")
-                    .put("user10", "j")
+                    .put("user1", Arrays.asList("a"))
+                    .put("user2", Arrays.asList("b"))
+                    .put("user3", Arrays.asList("c"))
+                    .put("user4", Arrays.asList("d"))
+                    .put("user5", Arrays.asList("e"))
+                    .put("user6", Arrays.asList("f"))
+                    .put("user7", Arrays.asList("g"))
+                    .put("user8", Arrays.asList("h"))
+                    .put("user9", Arrays.asList("i"))
+                    .put("user10", Arrays.asList("j"))
                     .put("value", 1234)
                     .build(),
-        new ServiceMetricEvent(
-            new DateTime(42),
-            "test",
-            "localhost",
-            new String[] { "a" },
-            new String[] { "b" },
-            new String[] { "c" },
-            new String[] { "d" },
-            new String[] { "e" },
-            new String[] { "f" },
-            new String[] { "g" },
-            new String[] { "h" },
-            new String[] { "i" },
-            new String[] { "j" },
-            "test-metric",
-            1234
-        ).toMap()
+        ServiceMetricEvent.builder()
+                          .setUser1(new String[] { "a" })
+                          .setUser2(new String[]{"b"})
+                          .setUser3(new String[]{"c"})
+                          .setUser4(new String[]{"d"})
+                          .setUser5(new String[]{"e"})
+                          .setUser6(new String[]{"f"})
+                          .setUser7(new String[]{"g"})
+                          .setUser8(new String[]{"h"})
+                          .setUser9(new String[]{"i"})
+                          .setUser10(new String[]{"j"})
+                          .build(new DateTime(42), "test-metric", 1234)
+                          .build("test", "localhost")
+                          .toMap()
     );
   }
 }
