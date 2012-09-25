@@ -122,6 +122,7 @@ public class EmitterTest
       emitter.emit(event);
     }
     waitForEmission(emitter);
+    Assert.assertTrue(httpClient.succeeded());
 
     closeNoFlush(emitter);
   }
@@ -230,6 +231,7 @@ public class EmitterTest
     );
     emitter.emit(new UnitEvent("test", 1));
     waitForEmission(emitter);
+    Assert.assertTrue(httpClient.succeeded());
 
     httpClient.setGoHandler(
         new GoHandler()
@@ -252,6 +254,7 @@ public class EmitterTest
 
     emitter.emit(new UnitEvent("test", 2));
     waitForEmission(emitter);
+    Assert.assertTrue(httpClient.succeeded());
     closeNoFlush(emitter);
   }
 

@@ -17,8 +17,10 @@
 package com.metamx.emitter.core;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.metamx.common.IAE;
 import com.metamx.common.lifecycle.LifecycleStart;
 import com.metamx.common.lifecycle.LifecycleStop;
 import com.metamx.common.logger.Logger;
@@ -30,11 +32,13 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.jboss.netty.handler.codec.http.HttpChunk;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 
+import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.Flushable;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -50,6 +54,8 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class HttpPostEmitter implements Flushable, Closeable, Emitter
 {
+  private static final int MAX_EVENT_SIZE = 1023 * 1024; // Set max size slightly less than 1M to allow for metadata
+
   private static final Logger log = new Logger(HttpPostEmitter.class);
   private static final AtomicInteger instanceCounter = new AtomicInteger();
 
@@ -57,8 +63,8 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
   private final HttpClient client;
   private final ObjectMapper jsonMapper;
 
-  private final AtomicReference<List<Event>> eventsList =
-      new AtomicReference<List<Event>>(Lists.<Event>newLinkedList());
+  private final AtomicReference<List<byte[]>> eventsList =
+      new AtomicReference<List<byte[]>>(Lists.<byte[]>newLinkedList());
   private final AtomicInteger count = new AtomicInteger(0);
   private final ScheduledExecutorService exec = Executors.newSingleThreadScheduledExecutor(
       new ThreadFactoryBuilder()
@@ -112,8 +118,20 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
       }
     }
 
+    final byte[] eventBytes;
+    try {
+      eventBytes = jsonMapper.writeValueAsBytes(event);
+    }
+    catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
+
+    if (eventBytes.length > MAX_EVENT_SIZE) {
+      log.error("Event too large, %,d > %,d.", eventBytes.length, MAX_EVENT_SIZE);
+    }
+
     synchronized (eventsList) {
-      eventsList.get().add(event);
+        eventsList.get().add(eventBytes);
     }
 
     if (!event.isSafeToBuffer() || count.incrementAndGet() >= config.getFlushCount()) {
@@ -198,50 +216,54 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
           currVersion = version.incrementAndGet();
         }
 
-        final List<Event> events;
+        final List<byte[]> events;
         synchronized (eventsList) {
-          events = eventsList.getAndSet(Lists.<Event>newLinkedList());
+          events = eventsList.getAndSet(Lists.<byte[]>newLinkedList());
         }
         log.debug("Running export with version[%s] and eventsList size[%s]", instantiatedVersion, events.size());
         if (!events.isEmpty()) {
           try {
+            ByteArrayOutputStream baos = serializeList(events);
+
             URL url = new URL(config.getRecipientBaseUrl());
 
             log.debug("url[%s] events.size[%s]", url, events.size());
             client.post(url)
-                .setContent("application/json", jsonMapper.writeValueAsBytes(events))
-                .go(new HttpResponseHandler<Object, Object>()
-                {
-                  @Override
-                  public ClientResponse<Object> handleResponse(HttpResponse httpResponse)
-                  {
-                    if ((httpResponse.getStatus().getCode() / 100) != 2) {
-                      log.warn(
-                          "Emissions of events not successful[%s], with message[%s].",
-                          httpResponse.getStatus(),
-                          httpResponse.getContent().toString(Charsets.UTF_8)
-                      );
-                      synchronized (eventsList) {
-                        eventsList.get().addAll(events);
+                .setContent("application/json", baos.toByteArray())
+                .go(
+                    new HttpResponseHandler<Object, Object>()
+                    {
+                      @Override
+                      public ClientResponse<Object> handleResponse(HttpResponse httpResponse)
+                      {
+                        if ((httpResponse.getStatus().getCode() / 100) != 2) {
+                          log.warn(
+                              "Emissions of events not successful[%s], with message[%s].",
+                              httpResponse.getStatus(),
+                              httpResponse.getContent().toString(Charsets.UTF_8)
+                          );
+                          synchronized (eventsList) {
+                            eventsList.get().addAll(events);
+                          }
+                        }
+                        return ClientResponse.finished(null);
+                      }
+
+                      @Override
+                      public ClientResponse<Object> handleChunk(
+                          ClientResponse<Object> response, HttpChunk httpChunk
+                      )
+                      {
+                        return response;
+                      }
+
+                      @Override
+                      public ClientResponse<Object> done(ClientResponse<Object> response)
+                      {
+                        return response;
                       }
                     }
-                    return ClientResponse.finished(null);
-                  }
-
-                  @Override
-                  public ClientResponse<Object> handleChunk(
-                      ClientResponse<Object> response, HttpChunk httpChunk
-                  )
-                  {
-                    return response;
-                  }
-
-                  @Override
-                  public ClientResponse<Object> done(ClientResponse<Object> response)
-                  {
-                    return response;
-                  }
-                })
+                )
                 .get();
           }
           catch (MalformedURLException e) {
@@ -269,6 +291,20 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
 
       // Always reschedule, otherwise we all of a sudden don't emit anything.
       exec.schedule(new EmittingRunnable(currVersion), config.getFlushMillis(), TimeUnit.MILLISECONDS);
+    }
+
+    private ByteArrayOutputStream serializeList(List<byte[]> events) throws IOException
+    {
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      baos.write("[".getBytes(Charsets.UTF_8));
+      Iterator<byte[]> eventsIter = events.iterator();
+      baos.write(eventsIter.next());
+      while (eventsIter.hasNext()) {
+        baos.write(",".getBytes(Charsets.UTF_8));
+        baos.write(eventsIter.next());
+      }
+      baos.write("]".getBytes());
+      return baos;
     }
   }
 
