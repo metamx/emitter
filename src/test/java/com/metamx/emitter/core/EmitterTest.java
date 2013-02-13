@@ -16,6 +16,7 @@
 
 package com.metamx.emitter.core;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
@@ -24,7 +25,6 @@ import com.metamx.http.client.GoHandler;
 import com.metamx.http.client.GoHandlers;
 import com.metamx.http.client.MockHttpClient;
 import com.metamx.http.client.Request;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -109,7 +109,7 @@ public class EmitterTest
                 request.getHeaders().get(HttpHeaders.Names.CONTENT_TYPE)
             );
             Assert.assertEquals(
-                jsonMapper.convertValue(events, List.class),
+                jsonMapper.convertValue(events.iterator(), List.class),
                 jsonMapper.readValue(request.getContent().toString(Charsets.UTF_8), List.class)
             );
 

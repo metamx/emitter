@@ -16,13 +16,13 @@
 
 package com.metamx.emitter.core;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Maps;
 import com.metamx.common.IAE;
 import com.metamx.common.ISE;
 import com.metamx.common.lifecycle.Lifecycle;
 import com.metamx.common.logger.Logger;
 import com.metamx.http.client.HttpClient;
-import org.codehaus.jackson.map.ObjectMapper;
 
 import java.util.Map;
 import java.util.Properties;

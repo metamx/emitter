@@ -19,7 +19,6 @@ package com.metamx.emitter.service;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import com.metamx.emitter.service.AlertEvent;
 import com.metamx.emitter.service.AlertEvent.Severity;
 import org.junit.Assert;
 import org.junit.Test;

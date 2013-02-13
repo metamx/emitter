@@ -16,7 +16,7 @@
 
 package com.metamx.emitter.core;
 
-import org.codehaus.jackson.annotate.JsonValue;
+import com.fasterxml.jackson.annotation.JsonValue;
 import org.joda.time.DateTime;
 
 import java.util.Map;

@@ -24,6 +24,7 @@ import org.joda.time.DateTime;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -124,6 +125,17 @@ public class ServiceMetricEvent implements Event
     public Builder setUser8  (String x) { userDims.put("user8", x); return this; }
     public Builder setUser9  (String x) { userDims.put("user9", x); return this; }
     public Builder setUser10 (String x) { userDims.put("user10", x); return this; }
+
+    public Object getUser1() { return userDims.get("user1"); }
+    public Object getUser2() { return userDims.get("user2"); }
+    public Object getUser3() { return userDims.get("user3"); }
+    public Object getUser4() { return userDims.get("user4"); }
+    public Object getUser5() { return userDims.get("user5"); }
+    public Object getUser6() { return userDims.get("user6"); }
+    public Object getUser7() { return userDims.get("user7"); }
+    public Object getUser8() { return userDims.get("user8"); }
+    public Object getUser9() { return userDims.get("user9"); }
+    public Object getUser10() { return userDims.get("user10"); }
 
     public ServiceEventBuilder<ServiceMetricEvent> build(
         final String metric,

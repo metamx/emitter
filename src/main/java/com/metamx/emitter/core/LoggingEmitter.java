@@ -19,10 +19,10 @@ package com.metamx.emitter.core;
 /**
  */
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.metamx.common.lifecycle.LifecycleStart;
 import com.metamx.common.lifecycle.LifecycleStop;
 import com.metamx.common.logger.Logger;
-import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.IOException;
 import java.util.concurrent.RejectedExecutionException;
