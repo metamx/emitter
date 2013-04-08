@@ -5,7 +5,7 @@
     <artifactId>emitter</artifactId>
     <version>0.2.1-SNAPSHOT</version>
     <name>emitter</name>
-    <description>The event-emitter library for pushing events into Kafka</description>
+    <description>Emit events to logger or an http service</description>
     <scm>
         <connection>scm:git:ssh://git@github.com/metamx/emitter.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/metamx/emitter.git</developerConnection>
@@ -14,7 +14,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <http-client.version>0.7.0</http-client.version>
+        <http-client.version>0.7.1</http-client.version>
     </properties>
 
     <dependencies>
