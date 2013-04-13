@@ -16,8 +16,8 @@
 
 package com.metamx.emitter.service;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.google.common.collect.ImmutableMap;
-import com.metamx.emitter.core.Event;
 import org.joda.time.DateTime;
 
 import java.util.HashMap;
@@ -25,7 +25,7 @@ import java.util.Map;
 
 /**
  */
-public class AlertEvent implements Event
+public class AlertEvent implements ServiceEvent
 {
   private final String service;
   private final String host;
@@ -36,6 +36,7 @@ public class AlertEvent implements Event
   private final Map<String, Object> dataMap;
 
   public AlertEvent(
+      DateTime createdTime,
       String service,
       String host,
       Severity severity,
@@ -43,13 +44,23 @@ public class AlertEvent implements Event
       Map<String, Object> dataMap
   )
   {
+    this.createdTime = createdTime;
     this.service = service;
     this.host = host;
     this.severity = severity;
     this.description = description;
     this.dataMap = dataMap;
+  }
 
-    createdTime = new DateTime();
+  public AlertEvent(
+      String service,
+      String host,
+      Severity severity,
+      String description,
+      Map<String, Object> dataMap
+  )
+  {
+    this(new DateTime(), service, host, severity, description, dataMap);
   }
 
   public AlertEvent(
@@ -59,7 +70,7 @@ public class AlertEvent implements Event
       Map<String, Object> dataMap
   )
   {
-    this(service, host, Severity.DEFAULT, description, dataMap);
+    this(new DateTime(), service, host, Severity.DEFAULT, description, dataMap);
   }
 
   public AlertEvent(
@@ -68,7 +79,7 @@ public class AlertEvent implements Event
       String description
   )
   {
-    this(service, host, description, new HashMap<String, Object>());
+    this(new DateTime(), service, host, Severity.DEFAULT, description, ImmutableMap.<String, Object>of());
   }
 
   public DateTime getCreatedTime()
@@ -79,6 +90,31 @@ public class AlertEvent implements Event
   public String getFeed()
   {
     return "alerts";
+  }
+
+  public String getService()
+  {
+    return service;
+  }
+
+  public String getHost()
+  {
+    return host;
+  }
+
+  public Severity getSeverity()
+  {
+    return severity;
+  }
+
+  public String getDescription()
+  {
+    return description;
+  }
+
+  public Map<String, Object> getDataMap()
+  {
+    return ImmutableMap.copyOf(dataMap);
   }
 
   public boolean isSafeToBuffer()

@@ -29,7 +29,7 @@ import java.util.Map;
 
 /**
  */
-public class ServiceMetricEvent implements Event
+public class ServiceMetricEvent implements ServiceEvent
 {
   public static Builder builder(){
     return new Builder();
@@ -67,6 +67,31 @@ public class ServiceMetricEvent implements Event
   public String getFeed()
   {
     return "metrics";
+  }
+
+  public String getService()
+  {
+    return service;
+  }
+
+  public String getHost()
+  {
+    return host;
+  }
+
+  public Map<String, Object> getUserDims()
+  {
+    return ImmutableMap.copyOf(userDims);
+  }
+
+  public String getMetric()
+  {
+    return metric;
+  }
+
+  public Number getValue()
+  {
+    return value;
   }
 
   public boolean isSafeToBuffer()
