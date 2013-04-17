@@ -22,6 +22,9 @@ import com.metamx.common.logger.Logger;
 import com.metamx.emitter.service.AlertBuilder;
 import com.metamx.emitter.service.ServiceEmitter;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
 /**
  */
 public class EmittingLogger extends Logger
@@ -70,8 +73,11 @@ public class EmittingLogger extends Logger
         .addData("class", className);
 
     if (t != null) {
+      PrintWriter trace = new PrintWriter(new StringWriter());
+      t.printStackTrace(trace);
       retVal.addData("exceptionType", t.getClass());
       retVal.addData("exceptionMessage", t.getMessage());
+      retVal.addData("exceptionStackTrace", trace.toString());
     }
 
     return retVal;
