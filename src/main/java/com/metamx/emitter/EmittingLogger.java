@@ -73,8 +73,9 @@ public class EmittingLogger extends Logger
         .addData("class", className);
 
     if (t != null) {
-      PrintWriter trace = new PrintWriter(new StringWriter());
-      t.printStackTrace(trace);
+      final StringWriter trace = new StringWriter();
+      final PrintWriter pw = new PrintWriter(trace);
+      t.printStackTrace(pw);
       retVal.addData("exceptionType", t.getClass());
       retVal.addData("exceptionMessage", t.getMessage());
       retVal.addData("exceptionStackTrace", trace.toString());
