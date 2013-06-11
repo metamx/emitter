@@ -19,12 +19,9 @@ package com.metamx.emitter.service;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import com.metamx.emitter.core.Event;
 import org.joda.time.DateTime;
 
-import javax.annotation.Nullable;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -115,7 +112,7 @@ public class ServiceMetricEvent implements ServiceEvent
                 new Predicate<Map.Entry<String, Object>>()
                 {
                   @Override
-                  public boolean apply(@Nullable Map.Entry<String, Object> input)
+                  public boolean apply(Map.Entry<String, Object> input)
                   {
                     return input.getKey() != null;
                   }

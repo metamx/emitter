@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.google.common.collect.ImmutableMap;
 import org.joda.time.DateTime;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -114,7 +115,7 @@ public class AlertEvent implements ServiceEvent
 
   public Map<String, Object> getDataMap()
   {
-    return ImmutableMap.copyOf(dataMap);
+    return Collections.unmodifiableMap(dataMap);
   }
 
   public boolean isSafeToBuffer()
