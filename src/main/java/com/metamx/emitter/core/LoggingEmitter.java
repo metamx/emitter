@@ -54,30 +54,32 @@ public class LoggingEmitter implements Emitter
   @LifecycleStart
   public void start()
   {
-    started.set(true);
-    final String message = "Start: started [%s]";
-    switch (level) {
-      case TRACE:
-        if (log.isTraceEnabled()) {
-          log.trace(message, started.get());
-        }
-        break;
-      case DEBUG:
-        if (log.isDebugEnabled()) {
-          log.debug(message, started.get());
-        }
-        break;
-      case INFO:
-        if (log.isInfoEnabled()) {
-          log.info(message, started.get());
-        }
-        break;
-      case WARN:
-        log.warn(message, started.get());
-        break;
-      case ERROR:
-        log.error(message, started.get());
-        break;
+    final boolean alreadyStarted = started.getAndSet(true);
+    if (!alreadyStarted) {
+      final String message = "Start: started [%s]";
+      switch (level) {
+        case TRACE:
+          if (log.isTraceEnabled()) {
+            log.trace(message, started.get());
+          }
+          break;
+        case DEBUG:
+          if (log.isDebugEnabled()) {
+            log.debug(message, started.get());
+          }
+          break;
+        case INFO:
+          if (log.isInfoEnabled()) {
+            log.info(message, started.get());
+          }
+          break;
+        case WARN:
+          log.warn(message, started.get());
+          break;
+        case ERROR:
+          log.error(message, started.get());
+          break;
+      }
     }
   }
 
@@ -129,32 +131,32 @@ public class LoggingEmitter implements Emitter
   @LifecycleStop
   public void close() throws IOException
   {
-    synchronized (started) {
-      started.set(false);
-    }
-    final String message = "Close: started [%s]";
-    switch (level) {
-      case TRACE:
-        if (log.isTraceEnabled()) {
-          log.trace(message, started.get());
-        }
-        break;
-      case DEBUG:
-        if (log.isDebugEnabled()) {
-          log.debug(message, started.get());
-        }
-        break;
-      case INFO:
-        if (log.isInfoEnabled()) {
-          log.info(message, started.get());
-        }
-        break;
-      case WARN:
-        log.warn(message, started.get());
-        break;
-      case ERROR:
-        log.error(message, started.get());
-        break;
+    final boolean wasStarted = started.getAndSet(false);
+    if (wasStarted) {
+      final String message = "Close: started [%s]";
+      switch (level) {
+        case TRACE:
+          if (log.isTraceEnabled()) {
+            log.trace(message, started.get());
+          }
+          break;
+        case DEBUG:
+          if (log.isDebugEnabled()) {
+            log.debug(message, started.get());
+          }
+          break;
+        case INFO:
+          if (log.isInfoEnabled()) {
+            log.info(message, started.get());
+          }
+          break;
+        case WARN:
+          log.warn(message, started.get());
+          break;
+        case ERROR:
+          log.error(message, started.get());
+          break;
+      }
     }
   }
 

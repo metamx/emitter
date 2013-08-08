@@ -26,7 +26,7 @@ public class LoggingEmitterConfig
 {
   @NotNull
   @JsonProperty
-  private String loggerClass = LoggingEmitterConfig.class.getName();
+  private String loggerClass = LoggingEmitter.class.getName();
 
   @NotNull
   @JsonProperty
@@ -50,5 +50,14 @@ public class LoggingEmitterConfig
   public void setLogLevel(String logLevel)
   {
     this.logLevel = logLevel;
+  }
+
+  @Override
+  public String toString()
+  {
+    return "LoggingEmitterConfig{" +
+           "loggerClass='" + loggerClass + '\'' +
+           ", logLevel='" + logLevel + '\'' +
+           '}';
   }
 }

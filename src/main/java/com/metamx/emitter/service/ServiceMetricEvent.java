@@ -16,6 +16,7 @@
 
 package com.metamx.emitter.service;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -97,6 +98,7 @@ public class ServiceMetricEvent implements ServiceEvent
   }
 
   @Override
+  @JsonValue
   public Map<String, Object> toMap()
   {
     return ImmutableMap.<String, Object>builder()

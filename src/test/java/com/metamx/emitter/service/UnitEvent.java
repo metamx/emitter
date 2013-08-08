@@ -16,6 +16,7 @@
 
 package com.metamx.emitter.service;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import com.google.common.collect.ImmutableMap;
 import com.metamx.emitter.core.Event;
 import org.joda.time.DateTime;
@@ -46,6 +47,7 @@ public class UnitEvent implements Event
   }
 
   @Override
+  @JsonValue
   public Map<String, Object> toMap()
   {
     return ImmutableMap.<String, Object>of(

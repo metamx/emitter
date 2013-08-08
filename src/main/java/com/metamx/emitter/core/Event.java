@@ -16,7 +16,6 @@
 
 package com.metamx.emitter.core;
 
-import com.fasterxml.jackson.annotation.JsonValue;
 import org.joda.time.DateTime;
 
 import java.util.Map;
@@ -25,7 +24,6 @@ import java.util.Map;
  */
 public interface Event
 {
-  @JsonValue
   public Map<String, Object> toMap();
   public String getFeed();
   public DateTime getCreatedTime();

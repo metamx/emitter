@@ -17,6 +17,8 @@
 package com.metamx.emitter;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicates;
+import com.google.common.collect.Maps;
 import com.metamx.common.ISE;
 import com.metamx.common.logger.Logger;
 import com.metamx.emitter.service.AlertBuilder;
@@ -121,7 +123,13 @@ public class EmittingLogger extends Logger
         error(format, description, dataMap);
       }
       else {
-        error(t, format, description, dataMap);
+        // Filter out the stack trace from the message, because it should be in the logline already if it's wanted.
+        error(
+            t,
+            format,
+            description,
+            Maps.filterKeys(dataMap, Predicates.not(Predicates.equalTo("exceptionStackTrace")))
+        );
       }
     }
   }

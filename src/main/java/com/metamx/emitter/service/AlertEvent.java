@@ -16,7 +16,7 @@
 
 package com.metamx.emitter.service;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
 import com.google.common.collect.ImmutableMap;
 import org.joda.time.DateTime;
 
@@ -113,6 +113,7 @@ public class AlertEvent implements ServiceEvent
     return description;
   }
 
+  @JsonValue
   public Map<String, Object> getDataMap()
   {
     return Collections.unmodifiableMap(dataMap);

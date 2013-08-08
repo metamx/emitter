@@ -16,6 +16,8 @@
 
 package com.metamx.emitter.service;
 
+import com.metamx.common.lifecycle.LifecycleStart;
+import com.metamx.common.lifecycle.LifecycleStop;
 import com.metamx.emitter.core.Emitter;
 import com.metamx.emitter.core.Event;
 
@@ -44,6 +46,7 @@ public class ServiceEmitter implements Emitter
     return host;
   }
 
+  @LifecycleStart
   public void start()
   {
     emitter.start();
@@ -64,6 +67,7 @@ public class ServiceEmitter implements Emitter
     emitter.flush();
   }
 
+  @LifecycleStop
   public void close() throws IOException
   {
     emitter.close();

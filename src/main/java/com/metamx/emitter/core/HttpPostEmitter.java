@@ -97,7 +97,7 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
   @LifecycleStart
   public void start()
   {
-    if (!started.get()) {
+    synchronized (started) {
       if (!started.getAndSet(true)) {
         exec.schedule(
             new EmittingRunnable(version.get()),
@@ -179,6 +179,7 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
   public void close() throws IOException
   {
     synchronized (started) {
+      // flush() doesn't do things if it is not started, so flush must happen before we mark it as not started.
       flush();
       started.set(false);
       exec.shutdown();
