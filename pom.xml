@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.metamx</groupId>
     <artifactId>emitter</artifactId>
-    <version>0.2.6</version>
+    <version>0.2.7-SNAPSHOT</version>
     <name>emitter</name>
     <description>Emit events to logger or an http service</description>
     <scm>
