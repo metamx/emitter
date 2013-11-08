@@ -113,7 +113,6 @@ public class AlertEvent implements ServiceEvent
     return description;
   }
 
-  @JsonValue
   public Map<String, Object> getDataMap()
   {
     return Collections.unmodifiableMap(dataMap);
@@ -125,6 +124,7 @@ public class AlertEvent implements ServiceEvent
   }
 
   @Override
+  @JsonValue
   public Map<String, Object> toMap()
   {
     return ImmutableMap.<String, Object>builder()
