@@ -3,14 +3,15 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.metamx</groupId>
     <artifactId>emitter</artifactId>
-    <version>0.2.7-SNAPSHOT</version>
+    <version>0.2.7</version>
     <name>emitter</name>
     <description>Emit events to logger or an http service</description>
     <scm>
         <connection>scm:git:ssh://git@github.com/metamx/emitter.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/metamx/emitter.git</developerConnection>
         <url>http://www.github.com/metamx/emitter</url>
-    </scm>
+      <tag>emitter-0.2.7</tag>
+  </scm>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
