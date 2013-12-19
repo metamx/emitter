@@ -126,7 +126,13 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
     }
 
     if (eventBytes.length > MAX_EVENT_SIZE) {
-      log.error("Event too large, %,d > %,d.", eventBytes.length, MAX_EVENT_SIZE);
+      log.error(
+          "Event too large to emit (%,d > %,d): %s ...",
+          eventBytes.length,
+          MAX_EVENT_SIZE,
+          new String(eventBytes, 0, MAX_EVENT_SIZE)
+      );
+      return;
     }
 
     synchronized (eventsList) {
