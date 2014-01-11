@@ -96,24 +96,24 @@ public class LoggingEmitter implements Emitter
       switch (level) {
         case TRACE:
           if (log.isTraceEnabled()) {
-            log.trace(message, jsonMapper.writeValueAsString(event.toMap()));
+            log.trace(message, jsonMapper.writeValueAsString(event));
           }
           break;
         case DEBUG:
           if (log.isDebugEnabled()) {
-            log.debug(message, jsonMapper.writeValueAsString(event.toMap()));
+            log.debug(message, jsonMapper.writeValueAsString(event));
           }
           break;
         case INFO:
           if (log.isInfoEnabled()) {
-            log.info(message, jsonMapper.writeValueAsString(event.toMap()));
+            log.info(message, jsonMapper.writeValueAsString(event));
           }
           break;
         case WARN:
-          log.warn(message, jsonMapper.writeValueAsString(event.toMap()));
+          log.warn(message, jsonMapper.writeValueAsString(event));
           break;
         case ERROR:
-          log.error(message, jsonMapper.writeValueAsString(event.toMap()));
+          log.error(message, jsonMapper.writeValueAsString(event));
           break;
       }
     } catch (Exception e) {
