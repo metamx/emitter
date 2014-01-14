@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.metamx.emitter.service.UnitEvent;
 import com.metamx.http.client.GoHandler;
 import com.metamx.http.client.GoHandlers;
@@ -101,7 +102,7 @@ public class EmitterTest
         new GoHandler()
         {
           @Override
-          public <Intermediate, Final> Future<Final> go(Request<Intermediate, Final> request) throws Exception
+          public <Intermediate, Final> ListenableFuture<Final> go(Request<Intermediate, Final> request) throws Exception
           {
             Assert.assertEquals(new URL(TARGET_URL), request.getUrl());
             Assert.assertEquals(
@@ -159,7 +160,7 @@ public class EmitterTest
         new GoHandler()
         {
           @Override
-          public <Intermediate, Final> Future<Final> go(Request<Intermediate, Final> intermediateFinalRequest)
+          public <Intermediate, Final> ListenableFuture<Final> go(Request<Intermediate, Final> intermediateFinalRequest)
               throws Exception
           {
             latch.countDown();
@@ -185,7 +186,7 @@ public class EmitterTest
         new GoHandler()
         {
           @Override
-          public <Intermediate, Final> Future<Final> go(Request<Intermediate, Final> intermediateFinalRequest)
+          public <Intermediate, Final> ListenableFuture<Final> go(Request<Intermediate, Final> intermediateFinalRequest)
               throws Exception
           {
             thisLatch.countDown();
@@ -217,7 +218,7 @@ public class EmitterTest
         new GoHandler()
         {
           @Override
-          public <Intermediate, Final> Future<Final> go(Request<Intermediate, Final> request)
+          public <Intermediate, Final> ListenableFuture<Final> go(Request<Intermediate, Final> request)
               throws Exception
           {
             Assert.assertNull(
@@ -237,7 +238,7 @@ public class EmitterTest
         new GoHandler()
         {
           @Override
-          public <Intermediate, Final> Future<Final> go(Request<Intermediate, Final> request)
+          public <Intermediate, Final> ListenableFuture<Final> go(Request<Intermediate, Final> request)
               throws Exception
           {
             Assert.assertEquals(
