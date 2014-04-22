@@ -104,7 +104,7 @@ public class ServiceMetricEventTest
 
     ServiceMetricEvent arrayConstructorEvent = ServiceMetricEvent
         .builder()
-        .setUser1(new String[] { "a" })
+        .setUser1(new String[]{"a"})
         .setUser2(new String[]{"b"})
         .setUser3(new String[]{"c"})
         .setUser4(new String[]{"d"})
@@ -227,7 +227,7 @@ public class ServiceMetricEventTest
                     .put("value", 1234)
                     .build(),
         ServiceMetricEvent.builder()
-                          .setUser1(new String[] { "a" })
+                          .setUser1(new String[]{"a"})
                           .setUser2(new String[]{"b"})
                           .setUser3(new String[]{"c"})
                           .setUser4(new String[]{"d"})
@@ -241,5 +241,30 @@ public class ServiceMetricEventTest
                           .build("test", "localhost")
                           .toMap()
     );
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void testInfinite() throws Exception
+  {
+    ServiceMetricEvent.builder().build("foo", 1 / 0d);
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void testInfinite2() throws Exception
+  {
+    ServiceMetricEvent.builder().build("foo", 1 / 0f);
+  }
+
+
+  @Test(expected = IllegalStateException.class)
+  public void testNaN() throws Exception
+  {
+    ServiceMetricEvent.builder().build("foo", 0 / 0d);
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void testNaN2() throws Exception
+  {
+    ServiceMetricEvent.builder().build("foo", 0 / 0f);
   }
 }

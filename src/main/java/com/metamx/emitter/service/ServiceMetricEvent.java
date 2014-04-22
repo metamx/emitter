@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import com.metamx.common.ISE;
 import org.joda.time.DateTime;
 
 import java.util.Arrays;
@@ -283,11 +284,11 @@ public class ServiceMetricEvent implements ServiceEvent
         final Number value
     )
     {
-      final Number theValue;
-      if (Double.isNaN(value.doubleValue()) || Double.isInfinite(value.doubleValue())) {
-        theValue = 0;
-      } else {
-        theValue = value;
+      if (Double.isNaN(value.doubleValue())) {
+        throw new ISE("Value of NaN is not allowed!");
+      }
+      if (Double.isInfinite(value.doubleValue())) {
+        throw new ISE("Value of Infinite is not allowed!");
       }
 
       return new ServiceEventBuilder<ServiceMetricEvent>()
@@ -301,7 +302,7 @@ public class ServiceMetricEvent implements ServiceEvent
               host,
               userDims,
               metric,
-              theValue
+              value
           );
         }
       };
