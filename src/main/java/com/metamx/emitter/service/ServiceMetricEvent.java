@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import com.metamx.common.ISE;
 import org.joda.time.DateTime;
 
 import java.util.Arrays;
@@ -29,7 +30,8 @@ import java.util.Map;
  */
 public class ServiceMetricEvent implements ServiceEvent
 {
-  public static Builder builder(){
+  public static Builder builder()
+  {
     return new Builder();
   }
 
@@ -102,63 +104,170 @@ public class ServiceMetricEvent implements ServiceEvent
   public Map<String, Object> toMap()
   {
     return ImmutableMap.<String, Object>builder()
-        .put("feed", getFeed())
-        .put("timestamp", createdTime.toString())
-        .put("service", service)
-        .put("host", host)
-        .put("metric", metric)
-        .put("value", value)
-        .putAll(
-            Maps.filterEntries(
-                userDims,
-                new Predicate<Map.Entry<String, Object>>()
-                {
-                  @Override
-                  public boolean apply(Map.Entry<String, Object> input)
-                  {
-                    return input.getKey() != null;
-                  }
-                }
-            )
-        )
-        .build();
+                       .put("feed", getFeed())
+                       .put("timestamp", createdTime.toString())
+                       .put("service", service)
+                       .put("host", host)
+                       .put("metric", metric)
+                       .put("value", value)
+                       .putAll(
+                           Maps.filterEntries(
+                               userDims,
+                               new Predicate<Map.Entry<String, Object>>()
+                               {
+                                 @Override
+                                 public boolean apply(Map.Entry<String, Object> input)
+                                 {
+                                   return input.getKey() != null;
+                                 }
+                               }
+                           )
+                       )
+                       .build();
   }
 
   public static class Builder
   {
     private final Map<String, Object> userDims = Maps.newTreeMap();
 
-    public Builder setUser1  (String[] x) { userDims.put("user1", Arrays.asList(x)); return this; }
-    public Builder setUser2  (String[] x) { userDims.put("user2", Arrays.asList(x)); return this; }
-    public Builder setUser3  (String[] x) { userDims.put("user3", Arrays.asList(x)); return this; }
-    public Builder setUser4  (String[] x) { userDims.put("user4", Arrays.asList(x)); return this; }
-    public Builder setUser5  (String[] x) { userDims.put("user5", Arrays.asList(x)); return this; }
-    public Builder setUser6  (String[] x) { userDims.put("user6", Arrays.asList(x)); return this; }
-    public Builder setUser7  (String[] x) { userDims.put("user7", Arrays.asList(x)); return this; }
-    public Builder setUser8  (String[] x) { userDims.put("user8", Arrays.asList(x)); return this; }
-    public Builder setUser9  (String[] x) { userDims.put("user9", Arrays.asList(x)); return this; }
-    public Builder setUser10 (String[] x) { userDims.put("user10", Arrays.asList(x)); return this; }
+    public Builder setUser1(String[] x)
+    {
+      userDims.put("user1", Arrays.asList(x));
+      return this;
+    }
 
-    public Builder setUser1  (String x) { userDims.put("user1", x); return this; }
-    public Builder setUser2  (String x) { userDims.put("user2", x); return this; }
-    public Builder setUser3  (String x) { userDims.put("user3", x); return this; }
-    public Builder setUser4  (String x) { userDims.put("user4", x); return this; }
-    public Builder setUser5  (String x) { userDims.put("user5", x); return this; }
-    public Builder setUser6  (String x) { userDims.put("user6", x); return this; }
-    public Builder setUser7  (String x) { userDims.put("user7", x); return this; }
-    public Builder setUser8  (String x) { userDims.put("user8", x); return this; }
-    public Builder setUser9  (String x) { userDims.put("user9", x); return this; }
-    public Builder setUser10 (String x) { userDims.put("user10", x); return this; }
+    public Builder setUser2(String[] x)
+    {
+      userDims.put("user2", Arrays.asList(x));
+      return this;
+    }
+
+    public Builder setUser3(String[] x)
+    {
+      userDims.put("user3", Arrays.asList(x));
+      return this;
+    }
+
+    public Builder setUser4(String[] x)
+    {
+      userDims.put("user4", Arrays.asList(x));
+      return this;
+    }
+
+    public Builder setUser5(String[] x)
+    {
+      userDims.put("user5", Arrays.asList(x));
+      return this;
+    }
+
+    public Builder setUser6(String[] x)
+    {
+      userDims.put("user6", Arrays.asList(x));
+      return this;
+    }
+
+    public Builder setUser7(String[] x)
+    {
+      userDims.put("user7", Arrays.asList(x));
+      return this;
+    }
+
+    public Builder setUser8(String[] x)
+    {
+      userDims.put("user8", Arrays.asList(x));
+      return this;
+    }
+
+    public Builder setUser9(String[] x)
+    {
+      userDims.put("user9", Arrays.asList(x));
+      return this;
+    }
+
+    public Builder setUser10(String[] x)
+    {
+      userDims.put("user10", Arrays.asList(x));
+      return this;
+    }
+
+    public Builder setUser1(String x)
+    {
+      userDims.put("user1", x);
+      return this;
+    }
+
+    public Builder setUser2(String x)
+    {
+      userDims.put("user2", x);
+      return this;
+    }
+
+    public Builder setUser3(String x)
+    {
+      userDims.put("user3", x);
+      return this;
+    }
+
+    public Builder setUser4(String x)
+    {
+      userDims.put("user4", x);
+      return this;
+    }
+
+    public Builder setUser5(String x)
+    {
+      userDims.put("user5", x);
+      return this;
+    }
+
+    public Builder setUser6(String x)
+    {
+      userDims.put("user6", x);
+      return this;
+    }
+
+    public Builder setUser7(String x)
+    {
+      userDims.put("user7", x);
+      return this;
+    }
+
+    public Builder setUser8(String x)
+    {
+      userDims.put("user8", x);
+      return this;
+    }
+
+    public Builder setUser9(String x)
+    {
+      userDims.put("user9", x);
+      return this;
+    }
+
+    public Builder setUser10(String x)
+    {
+      userDims.put("user10", x);
+      return this;
+    }
 
     public Object getUser1() { return userDims.get("user1"); }
+
     public Object getUser2() { return userDims.get("user2"); }
+
     public Object getUser3() { return userDims.get("user3"); }
+
     public Object getUser4() { return userDims.get("user4"); }
+
     public Object getUser5() { return userDims.get("user5"); }
+
     public Object getUser6() { return userDims.get("user6"); }
+
     public Object getUser7() { return userDims.get("user7"); }
+
     public Object getUser8() { return userDims.get("user8"); }
+
     public Object getUser9() { return userDims.get("user9"); }
+
     public Object getUser10() { return userDims.get("user10"); }
 
     public ServiceEventBuilder<ServiceMetricEvent> build(
@@ -175,6 +284,13 @@ public class ServiceMetricEvent implements ServiceEvent
         final Number value
     )
     {
+      if (Double.isNaN(value.doubleValue())) {
+        throw new ISE("Value of NaN is not allowed!");
+      }
+      if (Double.isInfinite(value.doubleValue())) {
+        throw new ISE("Value of Infinite is not allowed!");
+      }
+
       return new ServiceEventBuilder<ServiceMetricEvent>()
       {
         @Override
@@ -191,6 +307,5 @@ public class ServiceMetricEvent implements ServiceEvent
         }
       };
     }
-
   }
 }
