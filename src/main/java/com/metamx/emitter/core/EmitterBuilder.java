@@ -18,7 +18,6 @@ package com.metamx.emitter.core;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.metamx.common.ISE;
 import com.metamx.common.lifecycle.Lifecycle;
 import com.metamx.http.client.HttpClient;
 
@@ -56,12 +55,18 @@ public class EmitterBuilder
   {
     if (loggingEmitterConfig != null) {
       return buildLogging(objectMapper, lifecycle);
-    }
-    if (httpEmitterConfig != null) {
+    } else if (httpEmitterConfig != null) {
       return buildHttp(httpClient, objectMapper, lifecycle);
+    } else {
+      return buildNoop(lifecycle);
     }
+  }
 
-    throw new ISE("Must specify emitter as either logging or http");
+  public Emitter buildNoop(Lifecycle lifecycle)
+  {
+    Emitter retVal = new NoopEmitter();
+    lifecycle.addManagedInstance(retVal);
+    return retVal;
   }
 
   public Emitter buildLogging(ObjectMapper objectMapper, Lifecycle lifecycle)
