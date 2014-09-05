@@ -40,7 +40,6 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -72,6 +71,7 @@ public class EmitterTest
     HttpPostEmitter emitter = new HttpPostEmitter(
         new HttpEmitterConfig(timeInMillis, Integer.MAX_VALUE, TARGET_URL),
         httpClient,
+        true,
         jsonMapper
     );
     emitter.start();
@@ -83,6 +83,7 @@ public class EmitterTest
     HttpPostEmitter emitter = new HttpPostEmitter(
         new HttpEmitterConfig(Long.MAX_VALUE, size, TARGET_URL),
         httpClient,
+        true,
         jsonMapper
     );
     emitter.start();

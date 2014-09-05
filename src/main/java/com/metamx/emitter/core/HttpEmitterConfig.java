@@ -37,17 +37,39 @@ public class HttpEmitterConfig
   @JsonProperty
   private String recipientBaseUrl = null;
 
+  @NotNull
+  @JsonProperty
+  private String username = null;
+
+  @NotNull
+  @JsonProperty
+  private String password = null;
+
+  @JsonProperty
+  private String contentEncoding = null;
+
   public HttpEmitterConfig(){}
 
+  public HttpEmitterConfig(long flushMillis, int flushCount, String recipientBaseUrl)
+  {
+    this(flushMillis, flushCount, recipientBaseUrl, null, null, null);
+  }
+
   public HttpEmitterConfig(
-      long flushMillis,
+      long flushMillis,  // radtech client should always override this with a flushmillis that's 1 second
       int flushCount,
-      String recipientBaseUrl
+      String recipientBaseUrl,
+      String username,
+      String password,
+      String contentEncoding
   )
   {
     this.flushMillis = flushMillis;
     this.flushCount = flushCount;
     this.recipientBaseUrl = recipientBaseUrl;
+    this.username = username;
+    this.password = password;
+    this.contentEncoding = contentEncoding;
   }
 
   public long getFlushMillis()
@@ -63,5 +85,20 @@ public class HttpEmitterConfig
   public String getRecipientBaseUrl()
   {
     return recipientBaseUrl;
+  }
+
+  public String getUsername()
+  {
+    return username;
+  }
+
+  public String getPassword()
+  {
+    return password;
+  }
+
+  public String getContentEncoding()
+  {
+    return contentEncoding;
   }
 }

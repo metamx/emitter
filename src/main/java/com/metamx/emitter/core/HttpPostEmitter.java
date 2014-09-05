@@ -17,6 +17,7 @@
 package com.metamx.emitter.core;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
@@ -26,6 +27,7 @@ import com.metamx.common.lifecycle.LifecycleStart;
 import com.metamx.common.lifecycle.LifecycleStop;
 import com.metamx.common.logger.Logger;
 import com.metamx.http.client.HttpClient;
+import com.metamx.http.client.RequestBuilder;
 import com.metamx.http.client.response.ClientResponse;
 import com.metamx.http.client.response.HttpResponseHandler;
 import org.jboss.netty.handler.codec.http.HttpChunk;
@@ -35,9 +37,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.Flushable;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -48,6 +53,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.zip.GZIPOutputStream;
 
 /**
  */
@@ -61,9 +67,10 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
   private final HttpEmitterConfig config;
   private final HttpClient client;
   private final ObjectMapper jsonMapper;
+  private boolean outputArray = true;
 
-  private final AtomicReference<List<byte[]>> eventsList =
-      new AtomicReference<List<byte[]>>(Lists.<byte[]>newLinkedList());
+  private final AtomicReference<LinkedList<byte[]>> eventsList =
+      new AtomicReference<LinkedList<byte[]>>(Lists.<byte[]>newLinkedList());
   private final AtomicInteger count = new AtomicInteger(0);
   private final ScheduledExecutorService exec = Executors.newSingleThreadScheduledExecutor(
       new ThreadFactoryBuilder()
@@ -79,17 +86,34 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
       HttpClient client
   )
   {
-    this(config, client, new ObjectMapper());
+    this.config = config;
+    this.client = client;
+    this.outputArray = true;
+    this.jsonMapper = new ObjectMapper();
   }
 
   public HttpPostEmitter(
       HttpEmitterConfig config,
       HttpClient client,
+      boolean outputArray
+  )
+  {
+    this.config = config;
+    this.client = client;
+    this.outputArray = outputArray;
+    this.jsonMapper = new ObjectMapper();
+  }
+
+  public HttpPostEmitter(
+      HttpEmitterConfig config,
+      HttpClient client,
+      boolean outputArray,
       ObjectMapper jsonMapper
   )
   {
     this.config = config;
     this.client = client;
+    this.outputArray = outputArray;
     this.jsonMapper = jsonMapper;
   }
 
@@ -121,6 +145,14 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
     try {
       eventBytes = jsonMapper.writeValueAsBytes(event);
     }
+    /*
+     * add a buffer option here so they can dedicate a certain amount of memory to holding data in the buffer before starting to throw shit away
+     * OR
+     * Have an option for passing strategies. -> they pass an object that's a strategy interface
+     * we have a couple pre-implemented ones and can set one as default.
+     * default would be throwing away data w/ maxMemory constraint (there'd be a default for this too)
+     * people could change to the blocking strategy if they know what they're doing
+     */
     catch (IOException e) {
       throw Throwables.propagate(e);
     }
@@ -137,6 +169,7 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
 
     synchronized (eventsList) {
         eventsList.get().add(eventBytes);
+//      eventsList.get().removeFirst();
     }
 
     if (!event.isSafeToBuffer() || count.incrementAndGet() >= config.getFlushCount()) {
@@ -229,13 +262,23 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
         log.debug("Running export with version[%s] and eventsList size[%s]", instantiatedVersion, events.size());
         if (!events.isEmpty()) {
           try {
-            ByteArrayOutputStream baos = serializeList(events);
+
+            final byte[] serializedEvents = serializeList(events);
 
             URL url = new URL(config.getRecipientBaseUrl());
+            String contentEncoding = config.getContentEncoding();
+            String username = config.getUsername();
+            String password = config.getPassword();
 
+            RequestBuilder newRequest = client.post(url);
+
+            // Set header for content encoding if specified.
+            if (contentEncoding != null) {
+              newRequest.setHeader("Content-Encoding", contentEncoding);
+            }
             log.debug("url[%s] events.size[%s]", url, events.size());
-            client.post(url)
-                .setContent("application/json", baos.toByteArray())
+            newRequest.setBasicAuthentication(username, password);
+            newRequest.setContent("application/json", serializedEvents) // In the future, may not be hard coded to json
                 .go(
                     new HttpResponseHandler<Object, Object>()
                     {
@@ -273,8 +316,9 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
                 .get();
           }
           catch (MalformedURLException e) {
-            log.error(e, "Cannot post events!!!  Misconfigured or something? Bad urlString[%s]",
-                      config.getRecipientBaseUrl()
+            log.error(
+                e, "Cannot post events!!!  Misconfigured or something? Bad urlString[%s]",
+                config.getRecipientBaseUrl()
             );
           }
           catch (JsonProcessingException e) {
@@ -299,18 +343,35 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
       exec.schedule(new EmittingRunnable(currVersion), config.getFlushMillis(), TimeUnit.MILLISECONDS);
     }
 
-    private ByteArrayOutputStream serializeList(List<byte[]> events) throws IOException
+    private byte[] serializeList(List<byte[]> events) throws IOException
     {
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      baos.write("[".getBytes(Charsets.UTF_8));
-      Iterator<byte[]> eventsIter = events.iterator();
-      baos.write(eventsIter.next());
-      while (eventsIter.hasNext()) {
-        baos.write(",".getBytes(Charsets.UTF_8));
-        baos.write(eventsIter.next());
+      final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      final OutputStream os;
+      if ("gzip".equals(config.getContentEncoding())) {
+        log.info("Creating Gzip output stream.");
+        os = new GZIPOutputStream(baos);
+      } else {
+        os = baos;
       }
-      baos.write("]".getBytes());
-      return baos;
+
+      final Iterator<byte[]> eventsIter = events.iterator();
+
+      if (outputArray) {
+        os.write('[');
+        os.write(eventsIter.next());
+        while (eventsIter.hasNext()) {
+          os.write(',');
+          os.write(eventsIter.next());
+        }
+        os.write(']');
+      } else {
+        for (byte[] event : events) {
+          os.write(event);
+          os.write('\n');
+        }
+      }
+      os.close();
+      return baos.toByteArray();
     }
   }
 

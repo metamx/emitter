@@ -17,7 +17,6 @@
 package com.metamx.emitter.service;
 
 import com.google.common.collect.ImmutableMap;
-import com.metamx.emitter.service.ServiceMetricEvent;
 import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Test;
