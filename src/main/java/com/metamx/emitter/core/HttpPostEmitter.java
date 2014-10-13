@@ -17,7 +17,6 @@
 package com.metamx.emitter.core;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
@@ -33,7 +32,6 @@ import com.metamx.http.client.response.HttpResponseHandler;
 import org.jboss.netty.handler.codec.http.HttpChunk;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 
-import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.Flushable;
@@ -41,8 +39,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -75,7 +71,6 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
       new AtomicReference<LinkedList<byte[]>>(Lists.<byte[]>newLinkedList());
   private final AtomicInteger count = new AtomicInteger(0);
   private final AtomicInteger queuedByteCount = new AtomicInteger(0);
-  private final CountDownLatch byteCountLatch = new CountDownLatch(0);
   private final ScheduledExecutorService exec = Executors.newSingleThreadScheduledExecutor(
       new ThreadFactoryBuilder()
           .setDaemon(true)
