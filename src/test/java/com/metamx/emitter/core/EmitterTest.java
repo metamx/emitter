@@ -69,7 +69,7 @@ public class EmitterTest
   private HttpPostEmitter timeBasedEmitter(long timeInMillis)
   {
     HttpPostEmitter emitter = new HttpPostEmitter(
-        new HttpEmitterConfig(timeInMillis, Integer.MAX_VALUE, TARGET_URL),
+        new HttpEmitterConfig(timeInMillis, Integer.MAX_VALUE, 1024 * 1024, TARGET_URL), // TODO: clean this up
         httpClient,
         true,
         jsonMapper
@@ -81,7 +81,7 @@ public class EmitterTest
   private HttpPostEmitter sizeBasedEmitter(int size)
   {
     HttpPostEmitter emitter = new HttpPostEmitter(
-        new HttpEmitterConfig(Long.MAX_VALUE, size, TARGET_URL),
+        new HttpEmitterConfig(Long.MAX_VALUE, size, 1024 * 1024, TARGET_URL), // TODO: clean this up
         httpClient,
         true,
         jsonMapper

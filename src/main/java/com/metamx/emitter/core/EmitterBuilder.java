@@ -78,7 +78,7 @@ public class EmitterBuilder
 
   public Emitter buildHttp(HttpClient httpClient, ObjectMapper objectMapper, Lifecycle lifecycle)
   {
-    Emitter retVal = new HttpPostEmitter(httpEmitterConfig, httpClient, objectMapper);
+    Emitter retVal = new HttpPostEmitter(httpEmitterConfig, httpClient, true, objectMapper);
     lifecycle.addManagedInstance(retVal);
     return retVal;
   }

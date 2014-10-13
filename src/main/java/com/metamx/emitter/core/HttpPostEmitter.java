@@ -33,6 +33,7 @@ import com.metamx.http.client.response.HttpResponseHandler;
 import org.jboss.netty.handler.codec.http.HttpChunk;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.Flushable;
@@ -40,6 +41,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -72,6 +74,8 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
   private final AtomicReference<LinkedList<byte[]>> eventsList =
       new AtomicReference<LinkedList<byte[]>>(Lists.<byte[]>newLinkedList());
   private final AtomicInteger count = new AtomicInteger(0);
+  private final AtomicInteger queuedByteCount = new AtomicInteger(0);
+  private final CountDownLatch byteCountLatch = new CountDownLatch(0);
   private final ScheduledExecutorService exec = Executors.newSingleThreadScheduledExecutor(
       new ThreadFactoryBuilder()
           .setDaemon(true)
@@ -145,17 +149,27 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
     try {
       eventBytes = jsonMapper.writeValueAsBytes(event);
     }
-    /*
-     * add a buffer option here so they can dedicate a certain amount of memory to holding data in the buffer before starting to throw shit away
-     * OR
-     * Have an option for passing strategies. -> they pass an object that's a strategy interface
-     * we have a couple pre-implemented ones and can set one as default.
-     * default would be throwing away data w/ maxMemory constraint (there'd be a default for this too)
-     * people could change to the blocking strategy if they know what they're doing
-     */
     catch (IOException e) {
       throw Throwables.propagate(e);
     }
+
+    if (config.getMaxQueueBytes() > 0) {
+      synchronized (queuedByteCount) {
+        while(queuedByteCount.get() + eventBytes.length > config.getMaxQueueBytes()) {
+          try {
+            queuedByteCount.wait();
+            log.debug("BACK OFF, WARCHILD. SERIOUSLY!");
+          }
+          catch (InterruptedException e) {
+            log.debug("Thread Interrupted");
+            Thread.currentThread().interrupt();
+            throw Throwables.propagate(e);
+          }
+        }
+        queuedByteCount.addAndGet(eventBytes.length);
+      }
+    }
+
 
     if (eventBytes.length > MAX_EVENT_SIZE) {
       log.error(
@@ -169,10 +183,11 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
 
     synchronized (eventsList) {
         eventsList.get().add(eventBytes);
-//      eventsList.get().removeFirst();
     }
 
-    if (!event.isSafeToBuffer() || count.incrementAndGet() >= config.getFlushCount()) {
+    if (!event.isSafeToBuffer()
+        || count.incrementAndGet() >= config.getFlushCount()
+        || queuedByteCount.get() >= config.getFlushBytes()) {
       exec.execute(new EmittingRunnable(version.get()));
     }
   }
@@ -248,7 +263,7 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
         }
 
         if (instantiatedVersion != currVersion) {
-          log.debug("Skipping because instantiatedVersion[%s] != currVersion[%s]", instantiatedVersion, currVersion);
+//          log.debug("Skipping because instantiatedVersion[%s] != currVersion[%s]", instantiatedVersion, currVersion);
           return;
         } else {
           count.set(0);
@@ -256,10 +271,12 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
         }
 
         final List<byte[]> events;
+        int byteCount = 0;
         synchronized (eventsList) {
           events = eventsList.getAndSet(Lists.<byte[]>newLinkedList());
+          for(byte[] e : events) byteCount += e.length;
         }
-        log.debug("Running export with version[%s] and eventsList size[%s]", instantiatedVersion, events.size());
+        log.debug("Running export with version[%s] and eventsList count[%s], size[%s]", instantiatedVersion, events.size(), byteCount);
         if (!events.isEmpty()) {
           try {
 
@@ -278,6 +295,7 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
             }
             log.debug("url[%s] events.size[%s]", url, events.size());
             newRequest.setBasicAuthentication(username, password);
+            long requestTime = System.currentTimeMillis();
             newRequest.setContent("application/json", serializedEvents) // In the future, may not be hard coded to json
                 .go(
                     new HttpResponseHandler<Object, Object>()
@@ -285,6 +303,7 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
                       @Override
                       public ClientResponse<Object> handleResponse(HttpResponse httpResponse)
                       {
+                        log.debug("response code: %s", httpResponse.getStatus().getCode());
                         if ((httpResponse.getStatus().getCode() / 100) != 2) {
                           log.warn(
                               "Emissions of events not successful[%s], with message[%s].",
@@ -314,6 +333,16 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
                     }
                 )
                 .get();
+            if (config.getMaxQueueBytes() > 0) {
+              synchronized (queuedByteCount) {
+                queuedByteCount.addAndGet(-byteCount);
+                queuedByteCount.notifyAll();
+                log.debug("Ok, Warchild. GO!");
+              }
+            }
+            long responseTime = System.currentTimeMillis();
+            long elapsedTime = responseTime - requestTime;
+            log.debug("Total round trip request/response time in millis: %s", elapsedTime);
           }
           catch (MalformedURLException e) {
             log.error(

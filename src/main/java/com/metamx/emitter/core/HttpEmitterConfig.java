@@ -33,6 +33,9 @@ public class HttpEmitterConfig
   @JsonProperty
   private int flushCount = 500;
 
+  @JsonProperty
+  private int flushBytes = 1024 * 1024;
+
   @NotNull
   @JsonProperty
   private String recipientBaseUrl = null;
@@ -48,28 +51,35 @@ public class HttpEmitterConfig
   @JsonProperty
   private String contentEncoding = null;
 
+  @JsonProperty
+  private int maxQueueBytes = 0;
+
   public HttpEmitterConfig(){}
 
-  public HttpEmitterConfig(long flushMillis, int flushCount, String recipientBaseUrl)
+  public HttpEmitterConfig(long flushMillis, int flushCount, int flushBytes, String recipientBaseUrl)
   {
-    this(flushMillis, flushCount, recipientBaseUrl, null, null, null);
+    this(flushMillis, flushCount, flushBytes, recipientBaseUrl, null, null, null, 0);
   }
 
   public HttpEmitterConfig(
-      long flushMillis,  // radtech client should always override this with a flushmillis that's 1 second
+      long flushMillis,
       int flushCount,
+      int flushBytes,
       String recipientBaseUrl,
       String username,
       String password,
-      String contentEncoding
+      String contentEncoding,
+      int maxQueueBytes
   )
   {
     this.flushMillis = flushMillis;
     this.flushCount = flushCount;
+    this.flushBytes = flushBytes;
     this.recipientBaseUrl = recipientBaseUrl;
     this.username = username;
     this.password = password;
     this.contentEncoding = contentEncoding;
+    this.maxQueueBytes = maxQueueBytes;
   }
 
   public long getFlushMillis()
@@ -80,6 +90,11 @@ public class HttpEmitterConfig
   public int getFlushCount()
   {
     return flushCount;
+  }
+
+  public int getFlushBytes()
+  {
+    return flushBytes;
   }
 
   public String getRecipientBaseUrl()
@@ -100,5 +115,10 @@ public class HttpEmitterConfig
   public String getContentEncoding()
   {
     return contentEncoding;
+  }
+
+  public long getMaxQueueBytes()
+  {
+    return maxQueueBytes;
   }
 }
