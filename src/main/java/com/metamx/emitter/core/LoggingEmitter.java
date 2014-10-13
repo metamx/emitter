@@ -84,7 +84,7 @@ public class LoggingEmitter implements Emitter
   }
 
   @Override
-  public void emit(Event event)
+  public boolean emit(Event event)
   {
     synchronized (started) {
       if (!started.get()) {
@@ -119,6 +119,8 @@ public class LoggingEmitter implements Emitter
     } catch (Exception e) {
       log.warn("Failed to generate json", e);
     }
+
+    return true;
   }
 
   @Override

@@ -52,9 +52,10 @@ public class ServiceEmitter implements Emitter
     emitter.start();
   }
 
-  public void emit(Event event)
+  public boolean emit(Event event)
   {
     emitter.emit(event);
+    return true;
   }
 
   public void emit(ServiceEventBuilder builder)

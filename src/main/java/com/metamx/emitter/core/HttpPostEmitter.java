@@ -132,7 +132,7 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
   }
 
   @Override
-  public void emit(Event event)
+  public boolean emit(Event event)
   {
     synchronized (started) {
       if (!started.get()) {
@@ -173,7 +173,7 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
           MAX_EVENT_SIZE,
           new String(eventBytes, 0, MAX_EVENT_SIZE)
       );
-      return;
+      return false;
     }
 
     synchronized (eventsList) {
@@ -185,6 +185,7 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
         || queuedByteCount.get() >= config.getFlushBytes()) {
       exec.execute(new EmittingRunnable(version.get()));
     }
+    return true;
   }
 
   @Override

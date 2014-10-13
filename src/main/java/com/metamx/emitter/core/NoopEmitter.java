@@ -29,9 +29,9 @@ public class NoopEmitter implements Emitter
   }
 
   @Override
-  public void emit(Event event)
+  public boolean emit(Event event)
   {
-    // Do nothing
+    return true;
   }
 
   @Override
