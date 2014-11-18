@@ -26,6 +26,8 @@ import com.metamx.http.client.GoHandler;
 import com.metamx.http.client.GoHandlers;
 import com.metamx.http.client.MockHttpClient;
 import com.metamx.http.client.Request;
+import com.metamx.http.client.response.StatusResponseHandler;
+import com.metamx.http.client.response.StatusResponseHolder;
 import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -40,7 +42,6 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -52,6 +53,14 @@ public class EmitterTest
 
   MockHttpClient httpClient;
   HttpPostEmitter emitter;
+
+  public static StatusResponseHolder okResponse()
+  {
+    return new StatusResponseHolder(
+        new HttpResponseStatus(201, "Created"),
+        new StringBuilder("Yay")
+    );
+  }
 
   @Before
   public void setUp() throws Exception
@@ -89,6 +98,17 @@ public class EmitterTest
     return emitter;
   }
 
+  private HttpPostEmitter manualFlushEmitterWithBatchSizeAndBufferSize(long batchSize, long bufferSize)
+  {
+    HttpPostEmitter emitter = new HttpPostEmitter(
+        new HttpEmitterConfig(Long.MAX_VALUE, Integer.MAX_VALUE, TARGET_URL, batchSize, bufferSize),
+        httpClient,
+        jsonMapper
+    );
+    emitter.start();
+    return emitter;
+  }
+
   @Test
   public void testSanity() throws Exception
   {
@@ -113,8 +133,12 @@ public class EmitterTest
                 jsonMapper.convertValue(events.iterator(), List.class),
                 jsonMapper.readValue(request.getContent().toString(Charsets.UTF_8), List.class)
             );
+            Assert.assertTrue(
+                "handler is a StatusResponseHandler",
+                request.getHandler() instanceof StatusResponseHandler
+            );
 
-            return Futures.immediateFuture(null);
+            return Futures.immediateFuture((Final) okResponse());
           }
         }.times(1)
     );
@@ -123,9 +147,8 @@ public class EmitterTest
       emitter.emit(event);
     }
     waitForEmission(emitter);
-    Assert.assertTrue(httpClient.succeeded());
-
     closeNoFlush(emitter);
+    Assert.assertTrue(httpClient.succeeded());
   }
 
   @Test
@@ -137,7 +160,7 @@ public class EmitterTest
     emitter.emit(new UnitEvent("test", 1));
     emitter.emit(new UnitEvent("test", 2));
 
-    httpClient.setGoHandler(GoHandlers.passingHandler(null).times(1));
+    httpClient.setGoHandler(GoHandlers.passingHandler(okResponse()).times(1));
     emitter.emit(new UnitEvent("test", 3));
     waitForEmission(emitter);
 
@@ -146,6 +169,7 @@ public class EmitterTest
     emitter.emit(new UnitEvent("test", 5));
 
     closeAndExpectFlush(emitter);
+    Assert.assertTrue(httpClient.succeeded());
   }
 
   @Test
@@ -164,7 +188,7 @@ public class EmitterTest
               throws Exception
           {
             latch.countDown();
-            return Futures.immediateFuture(null);
+            return Futures.immediateFuture((Final) okResponse());
           }
         }.times(1)
     );
@@ -190,7 +214,7 @@ public class EmitterTest
               throws Exception
           {
             thisLatch.countDown();
-            return Futures.immediateFuture(null);
+            return Futures.immediateFuture((Final) okResponse());
           }
         }.times(1)
     );
@@ -207,6 +231,7 @@ public class EmitterTest
 
     waitForEmission(emitter);
     closeNoFlush(emitter);
+    Assert.assertTrue("httpClient.succeeded()", httpClient.succeeded());
   }
 
   @Test
@@ -221,12 +246,11 @@ public class EmitterTest
           public <Intermediate, Final> ListenableFuture<Final> go(Request<Intermediate, Final> request)
               throws Exception
           {
-            Assert.assertNull(
-                request.getHandler()
-                       .handleResponse(new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.BAD_REQUEST))
-                       .getObj()
-            );
-            return Futures.immediateFuture(null);
+            final Intermediate obj = request.getHandler()
+                   .handleResponse(new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.BAD_REQUEST))
+                   .getObj();
+            Assert.assertNotNull(obj);
+            return Futures.immediateFuture((Final) obj);
           }
         }.times(1)
     );
@@ -248,23 +272,22 @@ public class EmitterTest
                 jsonMapper.readValue(request.getContent().toString(Charsets.UTF_8), List.class)
             );
 
-            return Futures.immediateFuture(null);
+            return Futures.immediateFuture((Final) okResponse());
           }
         }.times(1)
     );
 
     emitter.emit(new UnitEvent("test", 2));
     waitForEmission(emitter);
-    Assert.assertTrue(httpClient.succeeded());
     closeNoFlush(emitter);
+    Assert.assertTrue(httpClient.succeeded());
   }
 
   private void closeAndExpectFlush(Emitter emitter) throws IOException
   {
-    httpClient.setGoHandler(GoHandlers.passingHandler(null).times(1));
+    httpClient.setGoHandler(GoHandlers.passingHandler(okResponse()).times(1));
     emitter.close();
   }
-
 
   private void closeNoFlush(Emitter emitter) throws IOException
   {
