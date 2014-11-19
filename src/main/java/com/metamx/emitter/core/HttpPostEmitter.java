@@ -376,8 +376,9 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
       long currentBatchBytes = 0;
 
       for (final byte[] message : messages) {
-        if (!currentBatch.isEmpty() && currentBatchBytes + MESSAGE_SEPARATOR.length + message.length + BATCH_END.length
-                                       > config.getMaxBatchSize()) {
+        if (!currentBatch.isEmpty()
+            && BATCH_START.length + currentBatchBytes + MESSAGE_SEPARATOR.length + message.length + BATCH_END.length
+               > config.getMaxBatchSize()) {
           // Existing batch is full; close it and start a new one.
           batches.add(currentBatch);
           currentBatch = Lists.newArrayList();
