@@ -27,6 +27,7 @@ import com.metamx.common.lifecycle.LifecycleStart;
 import com.metamx.common.lifecycle.LifecycleStop;
 import com.metamx.common.logger.Logger;
 import com.metamx.http.client.HttpClient;
+import com.metamx.http.client.RequestBuilder;
 import com.metamx.http.client.response.StatusResponseHandler;
 import com.metamx.http.client.response.StatusResponseHolder;
 
@@ -51,9 +52,6 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
 {
   private static final int MAX_EVENT_SIZE = 1023 * 1024; // Set max size slightly less than 1M to allow for metadata
   private static final long BUFFER_FULL_WARNING_THROTTLE = 30000;
-  private static final byte[] BATCH_START = new byte[]{'['};
-  private static final byte[] BATCH_END = new byte[]{']'};
-  private static final byte[] MESSAGE_SEPARATOR = new byte[]{','};
 
   private static final Logger log = new Logger(HttpPostEmitter.class);
   private static final AtomicInteger instanceCounter = new AtomicInteger();
@@ -94,17 +92,22 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
       ObjectMapper jsonMapper
   )
   {
+    final int batchOverhead = config.getBatchingStrategy().batchStart().length +
+                              config.getBatchingStrategy().batchEnd().length;
     Preconditions.checkArgument(
-        config.getMaxBatchSize() >= MAX_EVENT_SIZE + BATCH_START.length + BATCH_END.length,
-        "maxBatchSize must be greater than MAX_EVENT_SIZE[%,d] + overhead[%,d].",
-        MAX_EVENT_SIZE,
-        BATCH_START.length + BATCH_END.length
+        config.getMaxBatchSize() >= MAX_EVENT_SIZE + batchOverhead,
+        String.format(
+            "maxBatchSize must be greater than MAX_EVENT_SIZE[%,d] + overhead[%,d].",
+            MAX_EVENT_SIZE,
+            batchOverhead
+        )
     );
     Preconditions.checkArgument(
         config.getMaxBufferSize() >= MAX_EVENT_SIZE,
-        "maxBufferSize must be greater than MAX_EVENT_SIZE[%,d].",
-        MAX_EVENT_SIZE,
-        BATCH_START.length + BATCH_END.length
+        String.format(
+            "maxBufferSize must be greater than MAX_EVENT_SIZE[%,d].",
+            MAX_EVENT_SIZE
+        )
     );
     this.config = config;
     this.client = client;
@@ -154,7 +157,7 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
           "Event too large to emit (%,d > %,d): %s ...",
           eventBytes.length,
           MAX_EVENT_SIZE,
-          new String(eventBytes, 0, MAX_EVENT_SIZE)
+          new String(eventBytes, 0, 1024)
       );
       return;
     }
@@ -285,10 +288,17 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
           for (final List<byte[]> batch : batches) {
             log.debug("Sending batch to url[%s], batch.size[%,d]", url, batch.size());
 
-            final StatusResponseHolder response = client.post(url)
-                                                        .setContent("application/json", serializeBatch(batch))
-                                                        .go(new StatusResponseHandler(Charsets.UTF_8))
-                                                        .get();
+            final RequestBuilder requestBuilder = client.post(url)
+                                                        .setContent("application/json", serializeBatch(batch));
+
+            if (config.getBasicAuthentication() != null) {
+              final String[] parts = config.getBasicAuthentication().split(":", 2);
+              final String user = parts[0];
+              final String password = parts.length > 0 ? parts[1] : "";
+              requestBuilder.setBasicAuthentication(user, password);
+            }
+
+            final StatusResponseHolder response = requestBuilder.go(new StatusResponseHandler(Charsets.UTF_8)).get();
 
             if (response.getStatus().getCode() / 100 != 2) {
               throw new ISE(
@@ -314,7 +324,8 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
               config.getRecipientBaseUrl()
           );
           throw e;
-        } finally {
+        }
+        finally {
           if (requeue) {
             synchronized (eventsList) {
               eventsList.get().addAll(events);
@@ -344,16 +355,16 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
       final ByteArrayOutputStream baos = new ByteArrayOutputStream();
       try {
         boolean first = true;
-        baos.write(BATCH_START);
+        baos.write(config.getBatchingStrategy().batchStart());
         for (final byte[] message : messages) {
           if (first) {
             first = false;
           } else {
-            baos.write(MESSAGE_SEPARATOR);
+            baos.write(config.getBatchingStrategy().messageSeparator());
           }
           baos.write(message);
         }
-        baos.write(BATCH_END);
+        baos.write(config.getBatchingStrategy().batchEnd());
         return baos.toByteArray();
       }
       catch (IOException e) {
@@ -373,12 +384,16 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
     {
       final List<List<byte[]>> batches = Lists.newLinkedList();
       List<byte[]> currentBatch = Lists.newArrayList();
-      long currentBatchBytes = 0;
+      int currentBatchBytes = 0;
 
       for (final byte[] message : messages) {
-        if (!currentBatch.isEmpty()
-            && BATCH_START.length + currentBatchBytes + MESSAGE_SEPARATOR.length + message.length + BATCH_END.length
-               > config.getMaxBatchSize()) {
+        final int batchSizeAfterAddingMessage = config.getBatchingStrategy().batchStart().length
+                                                + currentBatchBytes
+                                                + config.getBatchingStrategy().messageSeparator().length
+                                                + message.length
+                                                + config.getBatchingStrategy().batchEnd().length;
+
+        if (!currentBatch.isEmpty() && batchSizeAfterAddingMessage > config.getMaxBatchSize()) {
           // Existing batch is full; close it and start a new one.
           batches.add(currentBatch);
           currentBatch = Lists.newArrayList();
@@ -395,6 +410,16 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
 
       return batches;
     }
+  }
+
+  /**
+   * Used for tests, should not be used elsewhere.
+   *
+   * @return the executor used for emission of events
+   */
+  long getBufferedSize()
+  {
+    return bufferedSize.get();
   }
 
   /**
