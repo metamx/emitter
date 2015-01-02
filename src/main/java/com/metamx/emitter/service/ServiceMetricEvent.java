@@ -190,6 +190,12 @@ public class ServiceMetricEvent implements ServiceEvent
       return this;
     }
 
+    public Builder setDimension(String dim, String[] values)
+    {
+      userDims.put(dim, Arrays.asList(values));
+      return this;
+    }
+
     public Builder setUser1(String x)
     {
       userDims.put("user1", x);
@@ -250,6 +256,12 @@ public class ServiceMetricEvent implements ServiceEvent
       return this;
     }
 
+    public Builder setDimension(String dim, String value)
+    {
+      userDims.put(dim, value);
+      return this;
+    }
+
     public Object getUser1() { return userDims.get("user1"); }
 
     public Object getUser2() { return userDims.get("user2"); }
@@ -269,6 +281,11 @@ public class ServiceMetricEvent implements ServiceEvent
     public Object getUser9() { return userDims.get("user9"); }
 
     public Object getUser10() { return userDims.get("user10"); }
+
+    public Object getDimension(String dim)
+    {
+      return userDims.get(dim);
+    }
 
     public ServiceEventBuilder<ServiceMetricEvent> build(
         final String metric,

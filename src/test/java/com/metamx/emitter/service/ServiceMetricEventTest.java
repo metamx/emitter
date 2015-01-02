@@ -17,7 +17,6 @@
 package com.metamx.emitter.service;
 
 import com.google.common.collect.ImmutableMap;
-import com.metamx.emitter.service.ServiceMetricEvent;
 import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Test;
@@ -237,6 +236,25 @@ public class ServiceMetricEventTest
                           .setUser8(new String[]{"h"})
                           .setUser9(new String[]{"i"})
                           .setUser10(new String[]{"j"})
+                          .build(new DateTime(42), "test-metric", 1234)
+                          .build("test", "localhost")
+                          .toMap()
+    );
+
+    Assert.assertEquals(
+        ImmutableMap.<String, Object>builder()
+                    .put("feed", "metrics")
+                    .put("timestamp", new DateTime(42).toString())
+                    .put("service", "test")
+                    .put("host", "localhost")
+                    .put("metric", "test-metric")
+                    .put("foo", "bar")
+                    .put("baz", Arrays.asList("foo", "qux"))
+                    .put("value", 1234)
+                    .build(),
+        ServiceMetricEvent.builder()
+                          .setDimension("foo", "bar")
+                          .setDimension("baz", new String[]{"foo", "qux"})
                           .build(new DateTime(42), "test-metric", 1234)
                           .build("test", "localhost")
                           .toMap()
