@@ -25,8 +25,10 @@ import javax.validation.constraints.NotNull;
  */
 public class HttpEmitterConfig
 {
-  private static final long DEFAULT_MAX_BATCH_SIZE = 5 * 1024 * 1024;
+  private static final int DEFAULT_MAX_BATCH_SIZE = 5 * 1024 * 1024;
   private static final long DEFAULT_MAX_BUFFER_SIZE = 250 * 1024 * 1024;
+  private static final String DEFAULT_BASIC_AUTHENTICATION = null;
+  private static final BatchingStrategy DEFAULT_BATCHING_STRATEGY = BatchingStrategy.ARRAY;
 
   @Min(1)
   @JsonProperty
@@ -36,17 +38,23 @@ public class HttpEmitterConfig
   @JsonProperty
   private int flushCount = 500;
 
+  @NotNull
+  @JsonProperty
+  private String recipientBaseUrl = null;
+
+  @JsonProperty
+  private String basicAuthentication = DEFAULT_BASIC_AUTHENTICATION;
+
+  @JsonProperty
+  private BatchingStrategy batchingStrategy = DEFAULT_BATCHING_STRATEGY;
+
   @Min(0)
   @JsonProperty
-  private long maxBatchSize = DEFAULT_MAX_BATCH_SIZE;
+  private int maxBatchSize = DEFAULT_MAX_BATCH_SIZE;
 
   @Min(0)
   @JsonProperty
   private long maxBufferSize = DEFAULT_MAX_BUFFER_SIZE;
-
-  @NotNull
-  @JsonProperty
-  private String recipientBaseUrl = null;
 
   public HttpEmitterConfig() {}
 
@@ -56,20 +64,51 @@ public class HttpEmitterConfig
       String recipientBaseUrl
   )
   {
-    this(flushMillis, flushCount, recipientBaseUrl, DEFAULT_MAX_BATCH_SIZE, DEFAULT_MAX_BUFFER_SIZE);
+    this(
+        flushMillis,
+        flushCount,
+        recipientBaseUrl,
+        DEFAULT_BASIC_AUTHENTICATION,
+        DEFAULT_BATCHING_STRATEGY,
+        DEFAULT_MAX_BATCH_SIZE,
+        DEFAULT_MAX_BUFFER_SIZE
+    );
   }
 
   public HttpEmitterConfig(
       long flushMillis,
       int flushCount,
       String recipientBaseUrl,
-      long maxBatchSize,
+      int maxBatchSize,
+      long maxBufferSize
+  )
+  {
+    this(
+        flushMillis,
+        flushCount,
+        recipientBaseUrl,
+        DEFAULT_BASIC_AUTHENTICATION,
+        DEFAULT_BATCHING_STRATEGY,
+        maxBatchSize,
+        maxBufferSize
+    );
+  }
+
+  public HttpEmitterConfig(
+      long flushMillis,
+      int flushCount,
+      String recipientBaseUrl,
+      String basicAuthentication,
+      BatchingStrategy batchingStrategy,
+      int maxBatchSize,
       long maxBufferSize
   )
   {
     this.flushMillis = flushMillis;
     this.flushCount = flushCount;
     this.recipientBaseUrl = recipientBaseUrl;
+    this.basicAuthentication = basicAuthentication;
+    this.batchingStrategy = batchingStrategy;
     this.maxBatchSize = maxBatchSize;
     this.maxBufferSize = maxBufferSize;
   }
@@ -84,7 +123,22 @@ public class HttpEmitterConfig
     return flushCount;
   }
 
-  public long getMaxBatchSize()
+  public String getRecipientBaseUrl()
+  {
+    return recipientBaseUrl;
+  }
+
+  public String getBasicAuthentication()
+  {
+    return basicAuthentication;
+  }
+
+  public BatchingStrategy getBatchingStrategy()
+  {
+    return batchingStrategy;
+  }
+
+  public int getMaxBatchSize()
   {
     return maxBatchSize;
   }
@@ -92,10 +146,5 @@ public class HttpEmitterConfig
   public long getMaxBufferSize()
   {
     return maxBufferSize;
-  }
-
-  public String getRecipientBaseUrl()
-  {
-    return recipientBaseUrl;
   }
 }

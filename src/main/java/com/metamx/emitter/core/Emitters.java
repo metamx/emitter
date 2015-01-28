@@ -56,7 +56,9 @@ public class Emitters
     return jsonMapper.convertValue(jsonified, EmitterBuilder.class).build(jsonMapper, httpClient, lifecycle);
   }
 
-  private static Map<String, Object> makeHttpMap(Properties props)
+  // Package-visible for unit tests
+
+  static Map<String, Object> makeHttpMap(Properties props)
   {
     Map<String, Object> httpMap = Maps.newHashMap();
 
@@ -70,10 +72,23 @@ public class Emitters
     httpMap.put("recipientBaseUrl", baseUrl);
     httpMap.put("flushMillis", Long.parseLong(props.getProperty("com.metamx.emitter.flushMillis", "60000")));
     httpMap.put("flushCount", Integer.parseInt(props.getProperty("com.metamx.emitter.flushCount", "300")));
+    if (props.containsKey("com.metamx.emitter.http.basicAuthentication")) {
+      httpMap.put("basicAuthentication", props.getProperty("com.metamx.emitter.http.basicAuthentication"));
+    }
+    if (props.containsKey("com.metamx.emitter.http.batchingStrategy")) {
+      httpMap.put("batchingStrategy", props.getProperty("com.metamx.emitter.http.batchingStrategy").toUpperCase());
+    }
+    if (props.containsKey("com.metamx.emitter.http.maxBatchSize")) {
+      httpMap.put("maxBatchSize", Integer.parseInt(props.getProperty("com.metamx.emitter.http.maxBatchSize")));
+    }
+    if (props.containsKey("com.metamx.emitter.http.maxBufferSize")) {
+      httpMap.put("maxBufferSize", Long.parseLong(props.getProperty("com.metamx.emitter.http.maxBufferSize")));
+    }
     return httpMap;
   }
 
-  private static Map<String, Object> makeLoggingMap(Properties props)
+  // Package-visible for unit tests
+  static Map<String, Object> makeLoggingMap(Properties props)
   {
     Map<String, Object> loggingMap = Maps.newHashMap();
 
