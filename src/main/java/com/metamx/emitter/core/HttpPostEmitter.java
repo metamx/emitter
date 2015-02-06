@@ -27,9 +27,10 @@ import com.metamx.common.lifecycle.LifecycleStart;
 import com.metamx.common.lifecycle.LifecycleStop;
 import com.metamx.common.logger.Logger;
 import com.metamx.http.client.HttpClient;
-import com.metamx.http.client.RequestBuilder;
+import com.metamx.http.client.Request;
 import com.metamx.http.client.response.StatusResponseHandler;
 import com.metamx.http.client.response.StatusResponseHolder;
+import org.jboss.netty.handler.codec.http.HttpMethod;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
@@ -288,17 +289,17 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
           for (final List<byte[]> batch : batches) {
             log.debug("Sending batch to url[%s], batch.size[%,d]", url, batch.size());
 
-            final RequestBuilder requestBuilder = client.post(url)
-                                                        .setContent("application/json", serializeBatch(batch));
+            final Request request = new Request(HttpMethod.POST, url)
+                .setContent("application/json", serializeBatch(batch));
 
             if (config.getBasicAuthentication() != null) {
               final String[] parts = config.getBasicAuthentication().split(":", 2);
               final String user = parts[0];
               final String password = parts.length > 0 ? parts[1] : "";
-              requestBuilder.setBasicAuthentication(user, password);
+              request.setBasicAuthentication(user, password);
             }
 
-            final StatusResponseHolder response = requestBuilder.go(new StatusResponseHandler(Charsets.UTF_8)).get();
+            final StatusResponseHolder response = client.go(request, new StatusResponseHandler(Charsets.UTF_8)).get();
 
             if (response.getStatus().getCode() / 100 != 2) {
               throw new ISE(

@@ -27,6 +27,7 @@ import com.metamx.http.client.GoHandler;
 import com.metamx.http.client.GoHandlers;
 import com.metamx.http.client.MockHttpClient;
 import com.metamx.http.client.Request;
+import com.metamx.http.client.response.HttpResponseHandler;
 import com.metamx.http.client.response.StatusResponseHandler;
 import com.metamx.http.client.response.StatusResponseHolder;
 import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
@@ -143,7 +144,7 @@ public class EmitterTest
         new GoHandler()
         {
           @Override
-          public <Intermediate, Final> ListenableFuture<Final> go(Request<Intermediate, Final> request) throws Exception
+          public <Intermediate, Final> ListenableFuture<Final> go(Request request, HttpResponseHandler<Intermediate, Final> handler) throws Exception
           {
             Assert.assertEquals(new URL(TARGET_URL), request.getUrl());
             Assert.assertEquals(
@@ -160,7 +161,7 @@ public class EmitterTest
             );
             Assert.assertTrue(
                 "handler is a StatusResponseHandler",
-                request.getHandler() instanceof StatusResponseHandler
+                handler instanceof StatusResponseHandler
             );
 
             return Futures.immediateFuture((Final) okResponse());
@@ -209,7 +210,7 @@ public class EmitterTest
         new GoHandler()
         {
           @Override
-          public <Intermediate, Final> ListenableFuture<Final> go(Request<Intermediate, Final> intermediateFinalRequest)
+          public <Intermediate, Final> ListenableFuture<Final> go(Request intermediateFinalRequest, HttpResponseHandler<Intermediate, Final> handler)
               throws Exception
           {
             latch.countDown();
@@ -235,7 +236,7 @@ public class EmitterTest
         new GoHandler()
         {
           @Override
-          public <Intermediate, Final> ListenableFuture<Final> go(Request<Intermediate, Final> intermediateFinalRequest)
+          public <Intermediate, Final> ListenableFuture<Final> go(Request intermediateFinalRequest, HttpResponseHandler<Intermediate, Final> handler)
               throws Exception
           {
             thisLatch.countDown();
@@ -271,10 +272,10 @@ public class EmitterTest
         new GoHandler()
         {
           @Override
-          public <Intermediate, Final> ListenableFuture<Final> go(Request<Intermediate, Final> request)
+          public <Intermediate, Final> ListenableFuture<Final> go(Request request, HttpResponseHandler<Intermediate, Final> handler)
               throws Exception
           {
-            final Intermediate obj = request.getHandler()
+            final Intermediate obj = handler
                                             .handleResponse(
                                                 new DefaultHttpResponse(
                                                     HttpVersion.HTTP_1_1,
@@ -298,7 +299,7 @@ public class EmitterTest
         new GoHandler()
         {
           @Override
-          public <Intermediate, Final> ListenableFuture<Final> go(Request<Intermediate, Final> request)
+          public <Intermediate, Final> ListenableFuture<Final> go(Request request, HttpResponseHandler<Intermediate, Final> handler)
               throws Exception
           {
             Assert.assertEquals(
@@ -336,7 +337,7 @@ public class EmitterTest
         new GoHandler()
         {
           @Override
-          public <Intermediate, Final> ListenableFuture<Final> go(Request<Intermediate, Final> request) throws Exception
+          public <Intermediate, Final> ListenableFuture<Final> go(Request request, HttpResponseHandler<Intermediate, Final> handler) throws Exception
           {
             Assert.assertEquals(new URL(TARGET_URL), request.getUrl());
             Assert.assertEquals(
@@ -357,7 +358,7 @@ public class EmitterTest
             );
             Assert.assertTrue(
                 "handler is a StatusResponseHandler",
-                request.getHandler() instanceof StatusResponseHandler
+                handler instanceof StatusResponseHandler
             );
 
             return Futures.immediateFuture((Final) okResponse());
@@ -396,7 +397,7 @@ public class EmitterTest
         new GoHandler()
         {
           @Override
-          public <Intermediate, Final> ListenableFuture<Final> go(Request<Intermediate, Final> request) throws Exception
+          public <Intermediate, Final> ListenableFuture<Final> go(Request request, HttpResponseHandler<Intermediate, Final> handler) throws Exception
           {
             Assert.assertEquals(new URL(TARGET_URL), request.getUrl());
             Assert.assertEquals(
@@ -413,7 +414,7 @@ public class EmitterTest
             );
             Assert.assertTrue(
                 "handler is a StatusResponseHandler",
-                request.getHandler() instanceof StatusResponseHandler
+                handler instanceof StatusResponseHandler
             );
 
             return Futures.immediateFuture((Final) okResponse());
