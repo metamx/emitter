@@ -72,6 +72,10 @@ public class Emitters
     httpMap.put("recipientBaseUrl", baseUrl);
     httpMap.put("flushMillis", Long.parseLong(props.getProperty("com.metamx.emitter.flushMillis", "60000")));
     httpMap.put("flushCount", Integer.parseInt(props.getProperty("com.metamx.emitter.flushCount", "300")));
+    /**
+     * The defaultValue for "com.metamx.emitter.http.flushTimeOut" must be same as {@link HttpEmitterConfig.DEFAULT_FLUSH_TIME_OUT}
+     * */
+    httpMap.put("flushTimeOut", Long.parseLong(props.getProperty("com.metamx.emitter.http.flushTimeOut", String.valueOf(Long.MAX_VALUE))));
     if (props.containsKey("com.metamx.emitter.http.basicAuthentication")) {
       httpMap.put("basicAuthentication", props.getProperty("com.metamx.emitter.http.basicAuthentication"));
     }

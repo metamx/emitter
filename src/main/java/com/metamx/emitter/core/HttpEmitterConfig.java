@@ -27,6 +27,7 @@ public class HttpEmitterConfig
 {
   private static final int DEFAULT_MAX_BATCH_SIZE = 5 * 1024 * 1024;
   private static final long DEFAULT_MAX_BUFFER_SIZE = 250 * 1024 * 1024;
+  private static final long DEFAULT_FLUSH_TIME_OUT = Long.MAX_VALUE; // do not time out in case flushTimeOut is not set
   private static final String DEFAULT_BASIC_AUTHENTICATION = null;
   private static final BatchingStrategy DEFAULT_BATCHING_STRATEGY = BatchingStrategy.ARRAY;
 
@@ -37,6 +38,10 @@ public class HttpEmitterConfig
   @Min(0)
   @JsonProperty
   private int flushCount = 500;
+
+  @Min(0)
+  @JsonProperty
+  private long flushTimeOut = DEFAULT_FLUSH_TIME_OUT;
 
   @NotNull
   @JsonProperty
@@ -67,6 +72,7 @@ public class HttpEmitterConfig
     this(
         flushMillis,
         flushCount,
+        DEFAULT_FLUSH_TIME_OUT,
         recipientBaseUrl,
         DEFAULT_BASIC_AUTHENTICATION,
         DEFAULT_BATCHING_STRATEGY,
@@ -86,6 +92,7 @@ public class HttpEmitterConfig
     this(
         flushMillis,
         flushCount,
+        DEFAULT_FLUSH_TIME_OUT,
         recipientBaseUrl,
         DEFAULT_BASIC_AUTHENTICATION,
         DEFAULT_BATCHING_STRATEGY,
@@ -104,8 +111,32 @@ public class HttpEmitterConfig
       long maxBufferSize
   )
   {
+    this(
+        flushMillis,
+        flushCount,
+        DEFAULT_FLUSH_TIME_OUT,
+        recipientBaseUrl,
+        basicAuthentication,
+        batchingStrategy,
+        maxBatchSize,
+        maxBufferSize
+    );
+  }
+
+  public HttpEmitterConfig(
+      long flushMillis,
+      int flushCount,
+      long flushTimeOut,
+      String recipientBaseUrl,
+      String basicAuthentication,
+      BatchingStrategy batchingStrategy,
+      int maxBatchSize,
+      long maxBufferSize
+  )
+  {
     this.flushMillis = flushMillis;
     this.flushCount = flushCount;
+    this.flushTimeOut = flushTimeOut;
     this.recipientBaseUrl = recipientBaseUrl;
     this.basicAuthentication = basicAuthentication;
     this.batchingStrategy = batchingStrategy;
@@ -121,6 +152,10 @@ public class HttpEmitterConfig
   public int getFlushCount()
   {
     return flushCount;
+  }
+
+  public long getFlushTimeOut() {
+    return flushTimeOut;
   }
 
   public String getRecipientBaseUrl()
