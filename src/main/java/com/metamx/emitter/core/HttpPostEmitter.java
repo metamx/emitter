@@ -23,6 +23,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.metamx.common.ISE;
+import com.metamx.common.StringUtils;
 import com.metamx.common.lifecycle.LifecycleStart;
 import com.metamx.common.lifecycle.LifecycleStop;
 import com.metamx.common.logger.Logger;
@@ -38,6 +39,7 @@ import java.io.Flushable;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -158,7 +160,7 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
           "Event too large to emit (%,d > %,d): %s ...",
           eventBytes.length,
           MAX_EVENT_SIZE,
-          new String(eventBytes, 0, 1024)
+          StringUtils.fromUtf8(ByteBuffer.wrap(eventBytes), 1024)
       );
       return;
     }
