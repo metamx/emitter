@@ -1,4 +1,4 @@
-event-emitter-new
-=================
+event-emitter
+=============
 
 Event Emitter code
