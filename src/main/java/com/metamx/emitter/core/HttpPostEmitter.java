@@ -41,11 +41,13 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -188,35 +190,22 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
   @Override
   public void flush() throws IOException
   {
-    final CountDownLatch latch = new CountDownLatch(1);
-
     if (started.get()) {
-
-      final EmittingRunnable emittingRunnable = new EmittingRunnable(version.get());
-      exec.execute(
-          new Runnable()
-          {
-            @Override
-            public void run()
-            {
-              try {
-                emittingRunnable.run();
-              }
-              finally {
-                log.debug("Counting down");
-                latch.countDown();
-              }
-            }
-          }
-      );
+      final Future future = exec.submit(new EmittingRunnable(version.get()));
 
       try {
-        latch.await();
-        log.debug("Awaited Latch");
+        future.get(config.getFlushTimeOut(), TimeUnit.MILLISECONDS);
       }
       catch (InterruptedException e) {
         log.debug("Thread Interrupted");
         Thread.currentThread().interrupt();
+        throw new IOException("Thread Interrupted while flushing", e);
+      }
+      catch (ExecutionException e) {
+        throw new IOException("Exception while flushing", e);
+      }
+      catch (TimeoutException e) {
+        throw new IOException(String.format("Timed out after [%d] millis during flushing", config.getFlushTimeOut()), e);
       }
     }
   }
