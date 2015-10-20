@@ -292,6 +292,14 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
 
             final StatusResponseHolder response = client.go(request, new StatusResponseHandler(Charsets.UTF_8)).get();
 
+            if (response.getStatus().getCode() == 413) {
+              throw new ISE(
+                  "Received HTTP status 413 from [%s]. Batch size of [%d] may be too large, try adjusting com.metamx.emitter.http.maxBatchSizeBatch",
+                  config.getRecipientBaseUrl(),
+                  config.getMaxBatchSize()
+              );
+            }
+
             if (response.getStatus().getCode() / 100 != 2) {
               throw new ISE(
                   "Emissions of events not successful[%s], with message[%s].",
