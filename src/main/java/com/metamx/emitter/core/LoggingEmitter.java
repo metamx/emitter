@@ -117,7 +117,7 @@ public class LoggingEmitter implements Emitter
           break;
       }
     } catch (Exception e) {
-      log.warn("Failed to generate json", e);
+      log.warn(e, "Failed to generate json");
     }
   }
 
