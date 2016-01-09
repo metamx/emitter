@@ -33,6 +33,7 @@ public class LoggingEmitterConfigTest
 
     Assert.assertEquals(LoggingEmitter.class.getName(), config.getLoggerClass());
     Assert.assertEquals("info", config.getLogLevel());
+    Assert.assertEquals("ALL", config.getEventsToLog());
   }
 
   @Test
@@ -43,7 +44,8 @@ public class LoggingEmitterConfigTest
         objectMapper.writeValueAsString(
             objectMapper.readValue(
                 "{ \"loggerClass\": \"Foo\","
-                + "\"logLevel\": \"debug\" "
+                + "\"logLevel\": \"debug\","
+                + "\"eventsToLog\": \"alerts\" "
                 + "}",
                 LoggingEmitterConfig.class
             )
@@ -53,5 +55,6 @@ public class LoggingEmitterConfigTest
 
     Assert.assertEquals("Foo", config.getLoggerClass());
     Assert.assertEquals("debug", config.getLogLevel());
+    Assert.assertEquals("alerts", config.getEventsToLog());
   }
 }
