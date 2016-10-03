@@ -34,6 +34,7 @@ import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
+import org.joda.time.Duration;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -144,7 +145,7 @@ public class EmitterTest
         new GoHandler()
         {
           @Override
-          public <Intermediate, Final> ListenableFuture<Final> go(Request request, HttpResponseHandler<Intermediate, Final> handler) throws Exception
+          public <Intermediate, Final> ListenableFuture<Final> go(Request request, HttpResponseHandler<Intermediate, Final> handler, Duration requestReadTimeout) throws Exception
           {
             Assert.assertEquals(new URL(TARGET_URL), request.getUrl());
             Assert.assertEquals(
@@ -210,7 +211,7 @@ public class EmitterTest
         new GoHandler()
         {
           @Override
-          public <Intermediate, Final> ListenableFuture<Final> go(Request intermediateFinalRequest, HttpResponseHandler<Intermediate, Final> handler)
+          public <Intermediate, Final> ListenableFuture<Final> go(Request intermediateFinalRequest, HttpResponseHandler<Intermediate, Final> handler, Duration requestReadTimeout)
               throws Exception
           {
             latch.countDown();
@@ -236,7 +237,7 @@ public class EmitterTest
         new GoHandler()
         {
           @Override
-          public <Intermediate, Final> ListenableFuture<Final> go(Request intermediateFinalRequest, HttpResponseHandler<Intermediate, Final> handler)
+          public <Intermediate, Final> ListenableFuture<Final> go(Request intermediateFinalRequest, HttpResponseHandler<Intermediate, Final> handler, Duration requestReadTimeout)
               throws Exception
           {
             thisLatch.countDown();
@@ -272,7 +273,7 @@ public class EmitterTest
         new GoHandler()
         {
           @Override
-          public <Intermediate, Final> ListenableFuture<Final> go(Request request, HttpResponseHandler<Intermediate, Final> handler)
+          public <Intermediate, Final> ListenableFuture<Final> go(Request request, HttpResponseHandler<Intermediate, Final> handler, Duration requestReadTimeout)
               throws Exception
           {
             final Intermediate obj = handler
@@ -299,7 +300,7 @@ public class EmitterTest
         new GoHandler()
         {
           @Override
-          public <Intermediate, Final> ListenableFuture<Final> go(Request request, HttpResponseHandler<Intermediate, Final> handler)
+          public <Intermediate, Final> ListenableFuture<Final> go(Request request, HttpResponseHandler<Intermediate, Final> handler, Duration requestReadTimeout)
               throws Exception
           {
             Assert.assertEquals(
@@ -337,7 +338,7 @@ public class EmitterTest
         new GoHandler()
         {
           @Override
-          public <Intermediate, Final> ListenableFuture<Final> go(Request request, HttpResponseHandler<Intermediate, Final> handler) throws Exception
+          public <Intermediate, Final> ListenableFuture<Final> go(Request request, HttpResponseHandler<Intermediate, Final> handler, Duration requestReadTimeout) throws Exception
           {
             Assert.assertEquals(new URL(TARGET_URL), request.getUrl());
             Assert.assertEquals(
@@ -397,7 +398,7 @@ public class EmitterTest
         new GoHandler()
         {
           @Override
-          public <Intermediate, Final> ListenableFuture<Final> go(Request request, HttpResponseHandler<Intermediate, Final> handler) throws Exception
+          public <Intermediate, Final> ListenableFuture<Final> go(Request request, HttpResponseHandler<Intermediate, Final> handler, Duration requestReadTimeout) throws Exception
           {
             Assert.assertEquals(new URL(TARGET_URL), request.getUrl());
             Assert.assertEquals(
