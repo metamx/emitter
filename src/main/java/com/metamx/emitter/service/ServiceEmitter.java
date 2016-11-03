@@ -16,34 +16,40 @@
 
 package com.metamx.emitter.service;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.metamx.common.lifecycle.LifecycleStart;
 import com.metamx.common.lifecycle.LifecycleStop;
 import com.metamx.emitter.core.Emitter;
 import com.metamx.emitter.core.Event;
 
 import java.io.IOException;
+import java.util.Map;
 
 public class ServiceEmitter implements Emitter
 {
-  private final String service;
-  private final String host;
+  private final ImmutableMap<String, String> serviceDimensions;
   private final Emitter emitter;
 
-  public ServiceEmitter(String service, String host, Emitter emitter)
+  public ServiceEmitter(String service, String host, Map<String, String> otherServiceDimensions, Emitter emitter)
   {
-    this.service = service;
-    this.host = host;
+    this.serviceDimensions = ImmutableMap
+        .<String, String>builder()
+        .put("service", Preconditions.checkNotNull(service))
+        .put("host", Preconditions.checkNotNull(host))
+        .putAll(otherServiceDimensions)
+        .build();
     this.emitter = emitter;
   }
 
   public String getService()
   {
-    return service;
+    return serviceDimensions.get("service");
   }
 
   public String getHost()
   {
-    return host;
+    return serviceDimensions.get("host");
   }
 
   @LifecycleStart
@@ -59,7 +65,7 @@ public class ServiceEmitter implements Emitter
 
   public void emit(ServiceEventBuilder builder)
   {
-    emit(builder.build(service, host));
+    emit(builder.build(serviceDimensions));
   }
 
   public void flush() throws IOException

@@ -36,24 +36,21 @@ public class ServiceMetricEvent implements ServiceEvent
   }
 
   private final DateTime createdTime;
-  private final String service;
-  private final String host;
+  private final ImmutableMap<String, String> serviceDims;
   private final Map<String, Object> userDims;
   private final String metric;
   private final Number value;
 
   private ServiceMetricEvent(
       DateTime createdTime,
-      String service,
-      String host,
+      ImmutableMap<String, String> serviceDims,
       Map<String, Object> userDims,
       String metric,
       Number value
   )
   {
     this.createdTime = createdTime != null ? createdTime : new DateTime();
-    this.service = service;
-    this.host = host;
+    this.serviceDims = serviceDims;
     this.userDims = userDims;
     this.metric = metric;
     this.value = value;
@@ -71,12 +68,12 @@ public class ServiceMetricEvent implements ServiceEvent
 
   public String getService()
   {
-    return service;
+    return serviceDims.get("service");
   }
 
   public String getHost()
   {
-    return host;
+    return serviceDims.get("host");
   }
 
   public Map<String, Object> getUserDims()
@@ -106,8 +103,7 @@ public class ServiceMetricEvent implements ServiceEvent
     return ImmutableMap.<String, Object>builder()
                        .put("feed", getFeed())
                        .put("timestamp", createdTime.toString())
-                       .put("service", service)
-                       .put("host", host)
+                       .putAll(serviceDims)
                        .put("metric", metric)
                        .put("value", value)
                        .putAll(
@@ -258,6 +254,9 @@ public class ServiceMetricEvent implements ServiceEvent
 
     public Builder setDimension(String dim, String value)
     {
+      if (dim.equals("service")) {
+        int x = 0;
+      }
       userDims.put(dim, value);
       return this;
     }
@@ -311,12 +310,11 @@ public class ServiceMetricEvent implements ServiceEvent
       return new ServiceEventBuilder<ServiceMetricEvent>()
       {
         @Override
-        public ServiceMetricEvent build(String service, String host)
+        public ServiceMetricEvent build(ImmutableMap<String, String> serviceDimensions)
         {
           return new ServiceMetricEvent(
               createdTime,
-              service,
-              host,
+              serviceDimensions,
               userDims,
               metric,
               value

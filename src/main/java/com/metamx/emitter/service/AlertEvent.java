@@ -28,8 +28,7 @@ import java.util.Map;
  */
 public class AlertEvent implements ServiceEvent
 {
-  private final String service;
-  private final String host;
+  private final ImmutableMap<String, String> serviceDimensions;
   private final Severity severity;
   private final String description;
   private final DateTime createdTime;
@@ -38,49 +37,44 @@ public class AlertEvent implements ServiceEvent
 
   public AlertEvent(
       DateTime createdTime,
-      String service,
-      String host,
+      ImmutableMap<String, String> serviceDimensions,
       Severity severity,
       String description,
       Map<String, Object> dataMap
   )
   {
     this.createdTime = createdTime;
-    this.service = service;
-    this.host = host;
+    this.serviceDimensions = serviceDimensions;
     this.severity = severity;
     this.description = description;
     this.dataMap = dataMap;
   }
 
   public AlertEvent(
-      String service,
-      String host,
+      ImmutableMap<String, String> serviceDimensions,
       Severity severity,
       String description,
       Map<String, Object> dataMap
   )
   {
-    this(new DateTime(), service, host, severity, description, dataMap);
+    this(new DateTime(), serviceDimensions, severity, description, dataMap);
   }
 
   public AlertEvent(
-      String service,
-      String host,
+      ImmutableMap<String, String> serviceDimensions,
       String description,
       Map<String, Object> dataMap
   )
   {
-    this(new DateTime(), service, host, Severity.DEFAULT, description, dataMap);
+    this(new DateTime(), serviceDimensions, Severity.DEFAULT, description, dataMap);
   }
 
   public AlertEvent(
-      String service,
-      String host,
+      ImmutableMap<String, String> serviceDimensions,
       String description
   )
   {
-    this(new DateTime(), service, host, Severity.DEFAULT, description, ImmutableMap.<String, Object>of());
+    this(new DateTime(), serviceDimensions, Severity.DEFAULT, description, ImmutableMap.<String, Object>of());
   }
 
   public DateTime getCreatedTime()
@@ -95,12 +89,12 @@ public class AlertEvent implements ServiceEvent
 
   public String getService()
   {
-    return service;
+    return serviceDimensions.get("service");
   }
 
   public String getHost()
   {
-    return host;
+    return serviceDimensions.get("host");
   }
 
   public Severity getSeverity()
@@ -130,8 +124,7 @@ public class AlertEvent implements ServiceEvent
     return ImmutableMap.<String, Object>builder()
         .put("feed", getFeed())
         .put("timestamp", createdTime.toString())
-        .put("service", service)
-        .put("host", host)
+        .putAll(serviceDimensions)
         .put("severity", severity.toString())
         .put("description", description)
         .put("data", dataMap)
@@ -217,9 +210,9 @@ public class AlertEvent implements ServiceEvent
       return new ServiceEventBuilder<AlertEvent>()
       {
         @Override
-        public AlertEvent build(String service, String host)
+        public AlertEvent build(ImmutableMap<String, String> serviceDimensions)
         {
-          return new AlertEvent(service, host, severity, description, dataMap);
+          return new AlertEvent(serviceDimensions, severity, description, dataMap);
         }
       };
     }

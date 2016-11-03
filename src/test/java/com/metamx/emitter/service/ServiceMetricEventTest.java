@@ -42,7 +42,7 @@ public class ServiceMetricEventTest
         .setUser9("i")
         .setUser10("j")
         .build("test-metric", 1234)
-        .build("test", "localhost");
+        .build(ImmutableMap.of("service", "test", "host", "localhost"));
     Assert.assertEquals(
         ImmutableMap.<String, Object>builder()
                     .put("feed", "metrics")
@@ -78,7 +78,7 @@ public class ServiceMetricEventTest
         .setUser9("i")
         .setUser10("j")
         .build("test-metric", 1234)
-        .build("test", "localhost");
+        .build(ImmutableMap.of("service", "test", "host", "localhost"));
 
     Assert.assertEquals(
         ImmutableMap.<String, Object>builder()
@@ -114,7 +114,7 @@ public class ServiceMetricEventTest
         .setUser9(new String[]{"i"})
         .setUser10(new String[]{"j"})
         .build("test-metric", 1234)
-        .build("test", "localhost");
+        .build(ImmutableMap.of("service", "test", "host", "localhost"));
 
     Assert.assertEquals(
         ImmutableMap.<String, Object>builder()
@@ -150,7 +150,7 @@ public class ServiceMetricEventTest
             .setUser9("i")
             .setUser10("j")
             .build(null, "test-metric", 1234)
-            .build("test", "localhost")
+            .build(ImmutableMap.of("service", "test", "host", "localhost"))
             .getCreatedTime()
     );
 
@@ -167,7 +167,7 @@ public class ServiceMetricEventTest
                           .setUser9(new String[]{"i"})
                           .setUser10(new String[]{"j"})
                           .build("test-metric", 1234)
-                          .build("test", "localhost")
+                          .build(ImmutableMap.of("service", "test", "host", "localhost"))
                           .getCreatedTime()
     );
 
@@ -202,7 +202,7 @@ public class ServiceMetricEventTest
             .setUser9("i")
             .setUser10("j")
             .build(new DateTime(42), "test-metric", 1234)
-            .build("test", "localhost")
+            .build(ImmutableMap.of("service", "test", "host", "localhost"))
             .toMap()
     );
 
@@ -237,7 +237,7 @@ public class ServiceMetricEventTest
                           .setUser9(new String[]{"i"})
                           .setUser10(new String[]{"j"})
                           .build(new DateTime(42), "test-metric", 1234)
-                          .build("test", "localhost")
+                          .build(ImmutableMap.of("service", "test", "host", "localhost"))
                           .toMap()
     );
 
@@ -256,7 +256,7 @@ public class ServiceMetricEventTest
                           .setDimension("foo", "bar")
                           .setDimension("baz", new String[]{"foo", "qux"})
                           .build(new DateTime(42), "test-metric", 1234)
-                          .build("test", "localhost")
+                          .build(ImmutableMap.of("service", "test", "host", "localhost"))
                           .toMap()
     );
   }
