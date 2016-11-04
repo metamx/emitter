@@ -254,9 +254,6 @@ public class ServiceMetricEvent implements ServiceEvent
 
     public Builder setDimension(String dim, String value)
     {
-      if (dim.equals("service")) {
-        int x = 0;
-      }
       userDims.put(dim, value);
       return this;
     }
