@@ -31,7 +31,12 @@ public class ServiceEmitter implements Emitter
   private final ImmutableMap<String, String> serviceDimensions;
   private final Emitter emitter;
 
-  public ServiceEmitter(String service, String host, Map<String, String> otherServiceDimensions, Emitter emitter)
+  public ServiceEmitter(String service, String host, Emitter emitter)
+  {
+    this(service, host, emitter, ImmutableMap.<String, String>of());
+  }
+
+  public ServiceEmitter(String service, String host, Emitter emitter, Map<String, String> otherServiceDimensions)
   {
     this.serviceDimensions = ImmutableMap
         .<String, String>builder()

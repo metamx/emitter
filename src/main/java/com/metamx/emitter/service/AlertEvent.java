@@ -51,30 +51,45 @@ public class AlertEvent implements ServiceEvent
   }
 
   public AlertEvent(
-      ImmutableMap<String, String> serviceDimensions,
+      DateTime createdTime,
+      String service,
+      String host,
       Severity severity,
       String description,
       Map<String, Object> dataMap
   )
   {
-    this(new DateTime(), serviceDimensions, severity, description, dataMap);
+    this(createdTime, ImmutableMap.of("service", service, "host", host), severity, description, dataMap);
   }
 
   public AlertEvent(
-      ImmutableMap<String, String> serviceDimensions,
+      String service,
+      String host,
+      Severity severity,
       String description,
       Map<String, Object> dataMap
   )
   {
-    this(new DateTime(), serviceDimensions, Severity.DEFAULT, description, dataMap);
+    this(new DateTime(), service, host, severity, description, dataMap);
   }
 
   public AlertEvent(
-      ImmutableMap<String, String> serviceDimensions,
+      String service,
+      String host,
+      String description,
+      Map<String, Object> dataMap
+  )
+  {
+    this(new DateTime(), service, host, Severity.DEFAULT, description, dataMap);
+  }
+
+  public AlertEvent(
+      String service,
+      String host,
       String description
   )
   {
-    this(new DateTime(), serviceDimensions, Severity.DEFAULT, description, ImmutableMap.<String, Object>of());
+    this(new DateTime(), service, host, Severity.DEFAULT, description, ImmutableMap.<String, Object>of());
   }
 
   public DateTime getCreatedTime()
@@ -212,7 +227,7 @@ public class AlertEvent implements ServiceEvent
         @Override
         public AlertEvent build(ImmutableMap<String, String> serviceDimensions)
         {
-          return new AlertEvent(serviceDimensions, severity, description, dataMap);
+          return new AlertEvent(new DateTime(), serviceDimensions, severity, description, dataMap);
         }
       };
     }
