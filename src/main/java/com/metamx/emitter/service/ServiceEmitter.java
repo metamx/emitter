@@ -24,7 +24,6 @@ import com.metamx.emitter.core.Emitter;
 import com.metamx.emitter.core.Event;
 
 import java.io.IOException;
-import java.util.Map;
 
 public class ServiceEmitter implements Emitter
 {
@@ -36,7 +35,12 @@ public class ServiceEmitter implements Emitter
     this(service, host, emitter, ImmutableMap.<String, String>of());
   }
 
-  public ServiceEmitter(String service, String host, Emitter emitter, Map<String, String> otherServiceDimensions)
+  public ServiceEmitter(
+      String service,
+      String host,
+      Emitter emitter,
+      ImmutableMap<String, String> otherServiceDimensions
+  )
   {
     this.serviceDimensions = ImmutableMap
         .<String, String>builder()
