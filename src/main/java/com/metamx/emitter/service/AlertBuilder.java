@@ -16,7 +16,9 @@
 
 package com.metamx.emitter.service;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import org.joda.time.DateTime;
 
 import java.util.Map;
 
@@ -66,9 +68,9 @@ public class AlertBuilder
     return new ServiceEventBuilder<AlertEvent>()
     {
       @Override
-      public AlertEvent build(String service, String host)
+      public AlertEvent build(ImmutableMap<String, String> serviceDimensions)
       {
-        return new AlertEvent(service, host, severity, description, dataMap);
+        return new AlertEvent(new DateTime(), serviceDimensions, severity, description, dataMap);
       }
     };
   }

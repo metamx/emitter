@@ -16,9 +16,15 @@
 
 package com.metamx.emitter.service;
 
+import com.google.common.collect.ImmutableMap;
 import com.metamx.emitter.core.Event;
 
-public interface ServiceEventBuilder<X extends Event>
+public abstract class ServiceEventBuilder<X extends Event>
 {
-  public X build(String service, String host);
+  public abstract X build(ImmutableMap<String, String> serviceDimensions);
+
+  public X build(String service, String host)
+  {
+    return build(ImmutableMap.of("service", service, "host", host));
+  }
 }

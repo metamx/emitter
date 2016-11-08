@@ -28,13 +28,27 @@ import java.util.Map;
  */
 public class AlertEvent implements ServiceEvent
 {
-  private final String service;
-  private final String host;
+  private final ImmutableMap<String, String> serviceDimensions;
   private final Severity severity;
   private final String description;
   private final DateTime createdTime;
 
   private final Map<String, Object> dataMap;
+
+  public AlertEvent(
+      DateTime createdTime,
+      ImmutableMap<String, String> serviceDimensions,
+      Severity severity,
+      String description,
+      Map<String, Object> dataMap
+  )
+  {
+    this.createdTime = createdTime;
+    this.serviceDimensions = serviceDimensions;
+    this.severity = severity;
+    this.description = description;
+    this.dataMap = dataMap;
+  }
 
   public AlertEvent(
       DateTime createdTime,
@@ -45,12 +59,7 @@ public class AlertEvent implements ServiceEvent
       Map<String, Object> dataMap
   )
   {
-    this.createdTime = createdTime;
-    this.service = service;
-    this.host = host;
-    this.severity = severity;
-    this.description = description;
-    this.dataMap = dataMap;
+    this(createdTime, ImmutableMap.of("service", service, "host", host), severity, description, dataMap);
   }
 
   public AlertEvent(
@@ -95,12 +104,12 @@ public class AlertEvent implements ServiceEvent
 
   public String getService()
   {
-    return service;
+    return serviceDimensions.get("service");
   }
 
   public String getHost()
   {
-    return host;
+    return serviceDimensions.get("host");
   }
 
   public Severity getSeverity()
@@ -130,8 +139,7 @@ public class AlertEvent implements ServiceEvent
     return ImmutableMap.<String, Object>builder()
         .put("feed", getFeed())
         .put("timestamp", createdTime.toString())
-        .put("service", service)
-        .put("host", host)
+        .putAll(serviceDimensions)
         .put("severity", severity.toString())
         .put("description", description)
         .put("data", dataMap)
@@ -217,9 +225,9 @@ public class AlertEvent implements ServiceEvent
       return new ServiceEventBuilder<AlertEvent>()
       {
         @Override
-        public AlertEvent build(String service, String host)
+        public AlertEvent build(ImmutableMap<String, String> serviceDimensions)
         {
-          return new AlertEvent(service, host, severity, description, dataMap);
+          return new AlertEvent(new DateTime(), serviceDimensions, severity, description, dataMap);
         }
       };
     }
