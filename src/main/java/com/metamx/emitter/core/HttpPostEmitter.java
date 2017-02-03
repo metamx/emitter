@@ -31,6 +31,9 @@ import com.metamx.http.client.HttpClient;
 import com.metamx.http.client.Request;
 import com.metamx.http.client.response.StatusResponseHandler;
 import com.metamx.http.client.response.StatusResponseHolder;
+import java.io.OutputStream;
+import java.util.zip.GZIPOutputStream;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 
 import java.io.ByteArrayOutputStream;
@@ -280,8 +283,11 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
           for (final List<byte[]> batch : batches) {
             log.debug("Sending batch to url[%s], batch.size[%,d]", url, batch.size());
 
+            byte[] decodedBatch = config.getCompress() ? serializeAndCompressBatch(batch) : serializeBatch(batch);
             final Request request = new Request(HttpMethod.POST, url)
-                .setContent("application/json", serializeBatch(batch));
+                .setContent("application/json", decodedBatch);
+
+            if (config.getCompress()) request.setHeader(HttpHeaders.Names.CONTENT_ENCODING, HttpHeaders.Values.GZIP);
 
             if (config.getBasicAuthentication() != null) {
               final String[] parts = config.getBasicAuthentication().split(":", 2);
@@ -347,30 +353,62 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
      * Serializes messages into a batch. Does not validate against maxBatchSize.
      *
      * @param messages list of JSON objects, one per message
-     *
      * @return serialized JSON array
      */
     private byte[] serializeBatch(List<byte[]> messages)
     {
       final ByteArrayOutputStream baos = new ByteArrayOutputStream();
       try {
-        boolean first = true;
-        baos.write(config.getBatchingStrategy().batchStart());
-        for (final byte[] message : messages) {
-          if (first) {
-            first = false;
-          } else {
-            baos.write(config.getBatchingStrategy().messageSeparator());
-          }
-          baos.write(message);
-        }
-        baos.write(config.getBatchingStrategy().batchEnd());
+        serializeTo(messages, baos);
         return baos.toByteArray();
       }
       catch (IOException e) {
         // There's no reason to have IOException in the signature of this method, since BAOS won't throw them.
         throw Throwables.propagate(e);
       }
+    }
+
+    /**
+     * Serialize and compress (gzip) messages into a batch.
+     *
+     * @param messages list of JSON objects, one per message
+     * @return serialized and compressed JSON array
+     */
+    private byte[] serializeAndCompressBatch(List<byte[]> messages)
+    {
+      try {
+        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        GZIPOutputStream gzos = new GZIPOutputStream(baos);
+        serializeTo(messages, gzos);
+        gzos.close();
+        baos.close();
+        return baos.toByteArray();
+      }
+      catch (IOException e) {
+        throw Throwables.propagate(e);
+      }
+    }
+
+    /**
+     * Serialize messages into a batch
+     *
+     * @param messages list of JSON objects, one per message
+     * @param os output stream with serialized batch
+     * @throws IOException if an I/O error occurs.
+     */
+    private void serializeTo(List<byte[]> messages, OutputStream os) throws IOException
+    {
+      boolean first = true;
+      os.write(config.getBatchingStrategy().batchStart());
+      for (final byte[] message : messages) {
+        if (first) {
+          first = false;
+        } else {
+          os.write(config.getBatchingStrategy().messageSeparator());
+        }
+        os.write(message);
+      }
+      os.write(config.getBatchingStrategy().batchEnd());
     }
 
     /**

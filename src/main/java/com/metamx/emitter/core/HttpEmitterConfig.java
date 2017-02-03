@@ -30,6 +30,7 @@ public class HttpEmitterConfig
   private static final long DEFAULT_FLUSH_TIME_OUT = Long.MAX_VALUE; // do not time out in case flushTimeOut is not set
   private static final String DEFAULT_BASIC_AUTHENTICATION = null;
   private static final BatchingStrategy DEFAULT_BATCHING_STRATEGY = BatchingStrategy.ARRAY;
+  private static final Boolean DEFAULT_COMPRESS = false;
 
   @Min(1)
   @JsonProperty
@@ -60,6 +61,9 @@ public class HttpEmitterConfig
   @Min(0)
   @JsonProperty
   private long maxBufferSize = DEFAULT_MAX_BUFFER_SIZE;
+
+  @JsonProperty
+  private boolean compress = DEFAULT_COMPRESS;
 
   public HttpEmitterConfig() {}
 
@@ -134,6 +138,31 @@ public class HttpEmitterConfig
       long maxBufferSize
   )
   {
+    this(
+        flushMillis,
+        flushCount,
+        flushTimeOut,
+        recipientBaseUrl,
+        basicAuthentication,
+        batchingStrategy,
+        maxBatchSize,
+        maxBufferSize,
+        DEFAULT_COMPRESS
+    );
+  }
+
+  public HttpEmitterConfig(
+      long flushMillis,
+      int flushCount,
+      long flushTimeOut,
+      String recipientBaseUrl,
+      String basicAuthentication,
+      BatchingStrategy batchingStrategy,
+      int maxBatchSize,
+      long maxBufferSize,
+      boolean compress
+  )
+  {
     this.flushMillis = flushMillis;
     this.flushCount = flushCount;
     this.flushTimeOut = flushTimeOut;
@@ -142,6 +171,7 @@ public class HttpEmitterConfig
     this.batchingStrategy = batchingStrategy;
     this.maxBatchSize = maxBatchSize;
     this.maxBufferSize = maxBufferSize;
+    this.compress = compress;
   }
 
   public long getFlushMillis()
@@ -181,5 +211,9 @@ public class HttpEmitterConfig
   public long getMaxBufferSize()
   {
     return maxBufferSize;
+  }
+
+  public boolean getCompress() {
+    return compress;
   }
 }

@@ -30,6 +30,15 @@ import com.metamx.http.client.Request;
 import com.metamx.http.client.response.HttpResponseHandler;
 import com.metamx.http.client.response.StatusResponseHandler;
 import com.metamx.http.client.response.StatusResponseHolder;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.net.URL;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.zip.GZIPInputStream;
 import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -39,14 +48,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.io.IOException;
-import java.net.URL;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  */
@@ -95,6 +96,20 @@ public class EmitterTest
   {
     HttpPostEmitter emitter = new HttpPostEmitter(
         new HttpEmitterConfig(Long.MAX_VALUE, size, TARGET_URL),
+        httpClient,
+        jsonMapper
+    );
+    emitter.start();
+    return emitter;
+  }
+
+  private HttpPostEmitter sizeBasedEmitterWithCompression(int size)
+  {
+    HttpPostEmitter emitter = new HttpPostEmitter(
+        new HttpEmitterConfig(
+            Long.MAX_VALUE, size, Long.MAX_VALUE, TARGET_URL, "foo:bar",
+            BatchingStrategy.ARRAY, Integer.MAX_VALUE, Long.MAX_VALUE, true
+        ),
         httpClient,
         jsonMapper
     );
@@ -431,6 +446,67 @@ public class EmitterTest
     emitter.flush();
     waitForEmission(emitter);
     Assert.assertEquals(0, emitter.getBufferedSize());
+    closeNoFlush(emitter);
+    Assert.assertTrue(httpClient.succeeded());
+  }
+
+  @Test
+  public void testBatchCompression() throws Exception
+  {
+    final List<UnitEvent> events = Arrays.asList(
+        new UnitEvent("plain-text", 1),
+        new UnitEvent("plain-text", 2)
+    );
+
+    emitter = sizeBasedEmitterWithCompression(2);
+
+    httpClient.setGoHandler(
+        new GoHandler()
+        {
+          @Override
+          public <Intermediate, Final> ListenableFuture<Final> go(Request request, HttpResponseHandler<Intermediate, Final> handler, Duration requestReadTimeout) throws Exception
+          {
+            Assert.assertEquals(new URL(TARGET_URL), request.getUrl());
+            Assert.assertEquals(
+                ImmutableList.of("application/json"),
+                request.getHeaders().get(HttpHeaders.Names.CONTENT_TYPE)
+            );
+            Assert.assertEquals(
+                ImmutableList.of(HttpHeaders.Values.GZIP),
+                request.getHeaders().get(HttpHeaders.Names.CONTENT_ENCODING)
+            );
+
+            byte[] bytes = request.getContent().array();
+            GZIPInputStream gis = new GZIPInputStream(new ByteArrayInputStream(bytes));
+            byte[] tmp = new byte[bytes.length * 3]; // Rough estimate
+            int count = 0;
+            int b;
+            while((b = gis.read()) >= 0) tmp[count++] = (byte)b;
+            bytes = new byte[count];
+            System.arraycopy(tmp, 0, bytes, 0, count);
+
+            Assert.assertEquals(
+                String.format(
+                    "[%s,%s]\n",
+                    jsonMapper.writeValueAsString(events.get(0)),
+                    jsonMapper.writeValueAsString(events.get(1))
+                ),
+                new String(bytes, Charsets.UTF_8)
+            );
+            Assert.assertTrue(
+                "handler is a StatusResponseHandler",
+                handler instanceof StatusResponseHandler
+            );
+
+            return Futures.immediateFuture((Final) okResponse());
+          }
+        }.times(1)
+    );
+
+    for (UnitEvent event : events) {
+      emitter.emit(event);
+    }
+    waitForEmission(emitter);
     closeNoFlush(emitter);
     Assert.assertTrue(httpClient.succeeded());
   }
