@@ -31,15 +31,11 @@ import com.metamx.http.client.HttpClient;
 import com.metamx.http.client.Request;
 import com.metamx.http.client.response.StatusResponseHandler;
 import com.metamx.http.client.response.StatusResponseHolder;
-import java.io.OutputStream;
-import java.util.zip.GZIPOutputStream;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
-import org.jboss.netty.handler.codec.http.HttpMethod;
-
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.Flushable;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
@@ -55,6 +51,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.zip.GZIPOutputStream;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
+import org.jboss.netty.handler.codec.http.HttpMethod;
 
 public class HttpPostEmitter implements Flushable, Closeable, Emitter
 {
@@ -283,11 +282,26 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
           for (final List<byte[]> batch : batches) {
             log.debug("Sending batch to url[%s], batch.size[%,d]", url, batch.size());
 
-            byte[] decodedBatch = config.getCompress() ? serializeAndCompressBatch(batch) : serializeBatch(batch);
-            final Request request = new Request(HttpMethod.POST, url)
-                .setContent("application/json", decodedBatch);
+            final Request request = new Request(HttpMethod.POST, url);
 
-            if (config.getCompress()) request.setHeader(HttpHeaders.Names.CONTENT_ENCODING, HttpHeaders.Values.GZIP);
+            byte[] payload = null;
+            ContentEncoding contentEncoding = config.getContentEncoding();
+            if (contentEncoding != null) {
+              switch (contentEncoding) {
+                case GZIP:
+                  payload = serializeAndCompressBatch(batch);
+                  request.setHeader(HttpHeaders.Names.CONTENT_ENCODING, HttpHeaders.Values.GZIP);
+                  break;
+                default:
+                  log.warn("Content encoding [$contentEncoding] is not supported. " +
+                           "The content will be sent without encoding");
+                  payload = serializeBatch(batch);
+              }
+            } else {
+              payload = serializeBatch(batch);
+            }
+
+            request.setContent("application/json", payload);
 
             if (config.getBasicAuthentication() != null) {
               final String[] parts = config.getBasicAuthentication().split(":", 2);
@@ -374,19 +388,15 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
      * @param messages list of JSON objects, one per message
      * @return serialized and compressed JSON array
      */
-    private byte[] serializeAndCompressBatch(List<byte[]> messages)
+    protected byte[] serializeAndCompressBatch(List<byte[]> messages) throws IOException
     {
-      try {
-        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        GZIPOutputStream gzos = new GZIPOutputStream(baos);
+      final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      try (
+          final GZIPOutputStream gzos = new GZIPOutputStream(baos)
+      ) {
         serializeTo(messages, gzos);
-        gzos.close();
-        baos.close();
-        return baos.toByteArray();
       }
-      catch (IOException e) {
-        throw Throwables.propagate(e);
-      }
+      return baos.toByteArray();
     }
 
     /**

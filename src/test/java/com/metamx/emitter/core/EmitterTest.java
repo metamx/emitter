@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.io.BaseEncoding;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.metamx.common.CompressionUtils;
 import com.metamx.emitter.service.UnitEvent;
 import com.metamx.http.client.GoHandler;
 import com.metamx.http.client.GoHandlers;
@@ -31,6 +32,7 @@ import com.metamx.http.client.response.HttpResponseHandler;
 import com.metamx.http.client.response.StatusResponseHandler;
 import com.metamx.http.client.response.StatusResponseHolder;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Arrays;
@@ -108,7 +110,7 @@ public class EmitterTest
     HttpPostEmitter emitter = new HttpPostEmitter(
         new HttpEmitterConfig(
             Long.MAX_VALUE, size, Long.MAX_VALUE, TARGET_URL, "foo:bar",
-            BatchingStrategy.ARRAY, Integer.MAX_VALUE, Long.MAX_VALUE, true
+            BatchingStrategy.ARRAY, Integer.MAX_VALUE, Long.MAX_VALUE, ContentEncoding.GZIP
         ),
         httpClient,
         jsonMapper
@@ -476,14 +478,8 @@ public class EmitterTest
                 request.getHeaders().get(HttpHeaders.Names.CONTENT_ENCODING)
             );
 
-            byte[] bytes = request.getContent().array();
-            GZIPInputStream gis = new GZIPInputStream(new ByteArrayInputStream(bytes));
-            byte[] tmp = new byte[bytes.length * 3]; // Rough estimate
-            int count = 0;
-            int b;
-            while((b = gis.read()) >= 0) tmp[count++] = (byte)b;
-            bytes = new byte[count];
-            System.arraycopy(tmp, 0, bytes, 0, count);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            CompressionUtils.gunzip(new ByteArrayInputStream(request.getContent().array()), baos);
 
             Assert.assertEquals(
                 String.format(
@@ -491,7 +487,7 @@ public class EmitterTest
                     jsonMapper.writeValueAsString(events.get(0)),
                     jsonMapper.writeValueAsString(events.get(1))
                 ),
-                new String(bytes, Charsets.UTF_8)
+                baos.toString(Charsets.UTF_8.name())
             );
             Assert.assertTrue(
                 "handler is a StatusResponseHandler",
