@@ -40,7 +40,6 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.zip.GZIPInputStream;
 import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -107,11 +106,13 @@ public class EmitterTest
 
   private HttpPostEmitter sizeBasedEmitterWithCompression(int size)
   {
+    HttpEmitterConfig config = (new HttpEmitterConfig.Builder()).setFlushMillis(Long.MAX_VALUE)
+                                                                .setFlushCount(size)
+                                                                .setRecipientBaseUrl(TARGET_URL)
+                                                                .setContentEncoding(ContentEncoding.GZIP)
+                                                                .build();
     HttpPostEmitter emitter = new HttpPostEmitter(
-        new HttpEmitterConfig(
-            Long.MAX_VALUE, size, Long.MAX_VALUE, TARGET_URL, "foo:bar",
-            BatchingStrategy.ARRAY, Integer.MAX_VALUE, Long.MAX_VALUE, ContentEncoding.GZIP
-        ),
+        config,
         httpClient,
         jsonMapper
     );

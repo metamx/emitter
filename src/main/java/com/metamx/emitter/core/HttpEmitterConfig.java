@@ -25,6 +25,9 @@ import javax.validation.constraints.NotNull;
  */
 public class HttpEmitterConfig
 {
+  private static final long DEFAULT_FLUSH_MILLIS = 60 * 1000;
+  private static final int DEFAULT_FLUSH_COUNTS = 500;
+  private static final String DEFAULT_REIPIENT_BASE_URL = null;
   private static final int DEFAULT_MAX_BATCH_SIZE = 5 * 1024 * 1024;
   private static final long DEFAULT_MAX_BUFFER_SIZE = 250 * 1024 * 1024;
   private static final long DEFAULT_FLUSH_TIME_OUT = Long.MAX_VALUE; // do not time out in case flushTimeOut is not set
@@ -34,11 +37,11 @@ public class HttpEmitterConfig
 
   @Min(1)
   @JsonProperty
-  private long flushMillis = 60 * 1000;
+  private long flushMillis = DEFAULT_FLUSH_MILLIS;
 
   @Min(0)
   @JsonProperty
-  private int flushCount = 500;
+  private int flushCount = DEFAULT_FLUSH_COUNTS;
 
   @Min(0)
   @JsonProperty
@@ -46,7 +49,7 @@ public class HttpEmitterConfig
 
   @NotNull
   @JsonProperty
-  private String recipientBaseUrl = null;
+  private String recipientBaseUrl = DEFAULT_REIPIENT_BASE_URL;
 
   @JsonProperty
   private String basicAuthentication = DEFAULT_BASIC_AUTHENTICATION;
@@ -65,8 +68,16 @@ public class HttpEmitterConfig
   @JsonProperty
   private ContentEncoding contentEncoding = DEFAULT_CONTENT_ENCODING;
 
+  /**
+   * @deprecated use {@link Builder}
+   */
+  @Deprecated
   public HttpEmitterConfig() {}
 
+  /**
+   * @deprecated use {@link Builder}
+   */
+  @Deprecated
   public HttpEmitterConfig(
       long flushMillis,
       int flushCount,
@@ -85,6 +96,10 @@ public class HttpEmitterConfig
     );
   }
 
+  /**
+   * @deprecated use {@link Builder}
+   */
+  @Deprecated
   public HttpEmitterConfig(
       long flushMillis,
       int flushCount,
@@ -105,6 +120,10 @@ public class HttpEmitterConfig
     );
   }
 
+  /**
+   * @deprecated use {@link Builder}
+   */
+  @Deprecated
   public HttpEmitterConfig(
       long flushMillis,
       int flushCount,
@@ -127,6 +146,10 @@ public class HttpEmitterConfig
     );
   }
 
+  /**
+   * @deprecated use {@link Builder}
+   */
+  @Deprecated
   public HttpEmitterConfig(
       long flushMillis,
       int flushCount,
@@ -151,7 +174,7 @@ public class HttpEmitterConfig
     );
   }
 
-  public HttpEmitterConfig(
+  private HttpEmitterConfig(
       long flushMillis,
       int flushCount,
       long flushTimeOut,
@@ -215,5 +238,87 @@ public class HttpEmitterConfig
 
   public ContentEncoding getContentEncoding() {
     return contentEncoding;
+  }
+
+  public static class Builder
+  {
+    private long flushMillis = DEFAULT_FLUSH_MILLIS;
+    private int flushCount = DEFAULT_FLUSH_COUNTS;
+    private String recipientBaseUrl = DEFAULT_REIPIENT_BASE_URL;
+    private long flushTimeOut = DEFAULT_FLUSH_TIME_OUT;
+    private String basicAuthentication = DEFAULT_BASIC_AUTHENTICATION;
+    private BatchingStrategy batchingStrategy = DEFAULT_BATCHING_STRATEGY;
+    private int maxBatchSize = DEFAULT_MAX_BATCH_SIZE;
+    private long maxBufferSize = DEFAULT_MAX_BUFFER_SIZE;
+    private ContentEncoding contentEncoding = DEFAULT_CONTENT_ENCODING;
+
+    public Builder setFlushMillis(long flushMillis)
+    {
+      this.flushMillis = flushMillis;
+      return this;
+    }
+
+    public Builder setFlushCount(int flushCount)
+    {
+      this.flushCount = flushCount;
+      return this;
+    }
+
+    public Builder setRecipientBaseUrl(String recipientBaseUrl)
+    {
+      this.recipientBaseUrl = recipientBaseUrl;
+      return this;
+    }
+
+    public Builder setFlushTimeOut(long flushTimeOut)
+    {
+      this.flushTimeOut = flushTimeOut;
+      return this;
+    }
+
+    public Builder setBasicAuthentication(String basicAuthentication)
+    {
+      this.basicAuthentication = basicAuthentication;
+      return this;
+    }
+
+    public Builder setBatchingStrategy(BatchingStrategy batchingStrategy)
+    {
+      this.batchingStrategy = batchingStrategy;
+      return this;
+    }
+
+    public Builder setMaxBatchSize(int maxBatchSize)
+    {
+      this.maxBatchSize = maxBatchSize;
+      return this;
+    }
+
+    public Builder setMaxBufferSize(long maxBufferSize)
+    {
+      this.maxBufferSize = maxBufferSize;
+      return this;
+    }
+
+    public Builder setContentEncoding(ContentEncoding contentEncoding)
+    {
+      this.contentEncoding = contentEncoding;
+      return this;
+    }
+
+    public HttpEmitterConfig build()
+    {
+      return new HttpEmitterConfig(
+          flushMillis,
+          flushCount,
+          flushTimeOut,
+          recipientBaseUrl,
+          basicAuthentication,
+          batchingStrategy,
+          maxBatchSize,
+          maxBufferSize,
+          contentEncoding
+      );
+    }
   }
 }
