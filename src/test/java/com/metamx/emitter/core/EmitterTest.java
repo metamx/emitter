@@ -84,8 +84,13 @@ public class EmitterTest
 
   private HttpPostEmitter timeBasedEmitter(long timeInMillis)
   {
+    HttpEmitterConfig config = new HttpEmitterConfig.Builder()
+        .setFlushMillis(timeInMillis)
+        .setFlushCount(Integer.MAX_VALUE)
+        .setRecipientBaseUrl(TARGET_URL)
+        .build();
     HttpPostEmitter emitter = new HttpPostEmitter(
-        new HttpEmitterConfig(timeInMillis, Integer.MAX_VALUE, TARGET_URL),
+        config,
         httpClient,
         jsonMapper
     );
@@ -95,8 +100,13 @@ public class EmitterTest
 
   private HttpPostEmitter sizeBasedEmitter(int size)
   {
+    HttpEmitterConfig config = new HttpEmitterConfig.Builder()
+        .setFlushMillis(Long.MAX_VALUE)
+        .setFlushCount(size)
+        .setRecipientBaseUrl(TARGET_URL)
+        .build();
     HttpPostEmitter emitter = new HttpPostEmitter(
-        new HttpEmitterConfig(Long.MAX_VALUE, size, TARGET_URL),
+        config,
         httpClient,
         jsonMapper
     );
@@ -104,13 +114,14 @@ public class EmitterTest
     return emitter;
   }
 
-  private HttpPostEmitter sizeBasedEmitterWithCompression(int size)
+  private HttpPostEmitter sizeBasedEmitterWithContentEncoding(int size, ContentEncoding encoding)
   {
-    HttpEmitterConfig config = (new HttpEmitterConfig.Builder()).setFlushMillis(Long.MAX_VALUE)
-                                                                .setFlushCount(size)
-                                                                .setRecipientBaseUrl(TARGET_URL)
-                                                                .setContentEncoding(ContentEncoding.GZIP)
-                                                                .build();
+    HttpEmitterConfig config = new HttpEmitterConfig.Builder()
+        .setFlushMillis(Long.MAX_VALUE)
+        .setFlushCount(size)
+        .setRecipientBaseUrl(TARGET_URL)
+        .setContentEncoding(encoding)
+        .build();
     HttpPostEmitter emitter = new HttpPostEmitter(
         config,
         httpClient,
@@ -122,16 +133,17 @@ public class EmitterTest
 
   private HttpPostEmitter manualFlushEmitterWithBasicAuthenticationAndNewlineSeparating(String authentication)
   {
+    HttpEmitterConfig config = new HttpEmitterConfig.Builder()
+        .setFlushMillis(Long.MAX_VALUE)
+        .setFlushCount(Integer.MAX_VALUE)
+        .setRecipientBaseUrl(TARGET_URL)
+        .setBasicAuthentication(authentication)
+        .setBatchingStrategy(BatchingStrategy.NEWLINES)
+        .setMaxBatchSize(1024 * 1024)
+        .setMaxBufferSize(100 * 1024 * 1024)
+        .build();
     HttpPostEmitter emitter = new HttpPostEmitter(
-        new HttpEmitterConfig(
-            Long.MAX_VALUE,
-            Integer.MAX_VALUE,
-            TARGET_URL,
-            authentication,
-            BatchingStrategy.NEWLINES,
-            1024 * 1024,
-            100 * 1024 * 1024
-        ),
+        config,
         httpClient,
         jsonMapper
     );
@@ -141,8 +153,15 @@ public class EmitterTest
 
   private HttpPostEmitter manualFlushEmitterWithBatchSizeAndBufferSize(int batchSize, long bufferSize)
   {
+    HttpEmitterConfig config = new HttpEmitterConfig.Builder()
+        .setFlushMillis(Long.MAX_VALUE)
+        .setFlushCount(Integer.MAX_VALUE)
+        .setRecipientBaseUrl(TARGET_URL)
+        .setMaxBatchSize(batchSize)
+        .setMaxBufferSize(bufferSize)
+        .build();
     HttpPostEmitter emitter = new HttpPostEmitter(
-        new HttpEmitterConfig(Long.MAX_VALUE, Integer.MAX_VALUE, TARGET_URL, batchSize, bufferSize),
+        config,
         httpClient,
         jsonMapper
     );
@@ -454,14 +473,14 @@ public class EmitterTest
   }
 
   @Test
-  public void testBatchCompression() throws Exception
+  public void testGzipContentEncoding() throws Exception
   {
     final List<UnitEvent> events = Arrays.asList(
         new UnitEvent("plain-text", 1),
         new UnitEvent("plain-text", 2)
     );
 
-    emitter = sizeBasedEmitterWithCompression(2);
+    emitter = sizeBasedEmitterWithContentEncoding(2, ContentEncoding.GZIP);
 
     httpClient.setGoHandler(
         new GoHandler()
