@@ -388,7 +388,7 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
      * @param messages list of JSON objects, one per message
      * @return serialized and compressed JSON array
      */
-    protected byte[] serializeAndCompressBatch(List<byte[]> messages) throws IOException
+    private byte[] serializeAndCompressBatch(List<byte[]> messages) throws IOException
     {
       final ByteArrayOutputStream baos = new ByteArrayOutputStream();
       try (
