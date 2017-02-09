@@ -27,7 +27,7 @@ public class HttpEmitterConfig
 {
   private static final long DEFAULT_FLUSH_MILLIS = 60 * 1000;
   private static final int DEFAULT_FLUSH_COUNTS = 500;
-  private static final String DEFAULT_REIPIENT_BASE_URL = null;
+  private static final String DEFAULT_RECIPIENT_BASE_URL = null;
   private static final int DEFAULT_MAX_BATCH_SIZE = 5 * 1024 * 1024;
   private static final long DEFAULT_MAX_BUFFER_SIZE = 250 * 1024 * 1024;
   private static final long DEFAULT_FLUSH_TIME_OUT = Long.MAX_VALUE; // do not time out in case flushTimeOut is not set
@@ -49,7 +49,7 @@ public class HttpEmitterConfig
 
   @NotNull
   @JsonProperty
-  private String recipientBaseUrl = DEFAULT_REIPIENT_BASE_URL;
+  private String recipientBaseUrl = DEFAULT_RECIPIENT_BASE_URL;
 
   @JsonProperty
   private String basicAuthentication = DEFAULT_BASIC_AUTHENTICATION;
@@ -69,9 +69,8 @@ public class HttpEmitterConfig
   private ContentEncoding contentEncoding = DEFAULT_CONTENT_ENCODING;
 
   /**
-   * @deprecated use {@link Builder}
+   * For JSON deserialization only. In other cases use {@link Builder}
    */
-  @Deprecated
   public HttpEmitterConfig() {}
 
   /**
@@ -244,13 +243,17 @@ public class HttpEmitterConfig
   {
     private long flushMillis = DEFAULT_FLUSH_MILLIS;
     private int flushCount = DEFAULT_FLUSH_COUNTS;
-    private String recipientBaseUrl = DEFAULT_REIPIENT_BASE_URL;
+    private String recipientBaseUrl = DEFAULT_RECIPIENT_BASE_URL;
     private long flushTimeOut = DEFAULT_FLUSH_TIME_OUT;
     private String basicAuthentication = DEFAULT_BASIC_AUTHENTICATION;
     private BatchingStrategy batchingStrategy = DEFAULT_BATCHING_STRATEGY;
     private int maxBatchSize = DEFAULT_MAX_BATCH_SIZE;
     private long maxBufferSize = DEFAULT_MAX_BUFFER_SIZE;
     private ContentEncoding contentEncoding = DEFAULT_CONTENT_ENCODING;
+
+    public Builder(String recipientBaseUrl) {
+      this.recipientBaseUrl = recipientBaseUrl;
+    }
 
     public Builder setFlushMillis(long flushMillis)
     {
@@ -261,12 +264,6 @@ public class HttpEmitterConfig
     public Builder setFlushCount(int flushCount)
     {
       this.flushCount = flushCount;
-      return this;
-    }
-
-    public Builder setRecipientBaseUrl(String recipientBaseUrl)
-    {
-      this.recipientBaseUrl = recipientBaseUrl;
       return this;
     }
 

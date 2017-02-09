@@ -84,10 +84,9 @@ public class EmitterTest
 
   private HttpPostEmitter timeBasedEmitter(long timeInMillis)
   {
-    HttpEmitterConfig config = new HttpEmitterConfig.Builder()
+    HttpEmitterConfig config = new HttpEmitterConfig.Builder(TARGET_URL)
         .setFlushMillis(timeInMillis)
         .setFlushCount(Integer.MAX_VALUE)
-        .setRecipientBaseUrl(TARGET_URL)
         .build();
     HttpPostEmitter emitter = new HttpPostEmitter(
         config,
@@ -100,10 +99,9 @@ public class EmitterTest
 
   private HttpPostEmitter sizeBasedEmitter(int size)
   {
-    HttpEmitterConfig config = new HttpEmitterConfig.Builder()
+    HttpEmitterConfig config = new HttpEmitterConfig.Builder(TARGET_URL)
         .setFlushMillis(Long.MAX_VALUE)
         .setFlushCount(size)
-        .setRecipientBaseUrl(TARGET_URL)
         .build();
     HttpPostEmitter emitter = new HttpPostEmitter(
         config,
@@ -116,10 +114,9 @@ public class EmitterTest
 
   private HttpPostEmitter sizeBasedEmitterWithContentEncoding(int size, ContentEncoding encoding)
   {
-    HttpEmitterConfig config = new HttpEmitterConfig.Builder()
+    HttpEmitterConfig config = new HttpEmitterConfig.Builder(TARGET_URL)
         .setFlushMillis(Long.MAX_VALUE)
         .setFlushCount(size)
-        .setRecipientBaseUrl(TARGET_URL)
         .setContentEncoding(encoding)
         .build();
     HttpPostEmitter emitter = new HttpPostEmitter(
@@ -133,10 +130,9 @@ public class EmitterTest
 
   private HttpPostEmitter manualFlushEmitterWithBasicAuthenticationAndNewlineSeparating(String authentication)
   {
-    HttpEmitterConfig config = new HttpEmitterConfig.Builder()
+    HttpEmitterConfig config = new HttpEmitterConfig.Builder(TARGET_URL)
         .setFlushMillis(Long.MAX_VALUE)
         .setFlushCount(Integer.MAX_VALUE)
-        .setRecipientBaseUrl(TARGET_URL)
         .setBasicAuthentication(authentication)
         .setBatchingStrategy(BatchingStrategy.NEWLINES)
         .setMaxBatchSize(1024 * 1024)
@@ -153,10 +149,9 @@ public class EmitterTest
 
   private HttpPostEmitter manualFlushEmitterWithBatchSizeAndBufferSize(int batchSize, long bufferSize)
   {
-    HttpEmitterConfig config = new HttpEmitterConfig.Builder()
+    HttpEmitterConfig config = new HttpEmitterConfig.Builder(TARGET_URL)
         .setFlushMillis(Long.MAX_VALUE)
         .setFlushCount(Integer.MAX_VALUE)
-        .setRecipientBaseUrl(TARGET_URL)
         .setMaxBatchSize(batchSize)
         .setMaxBufferSize(bufferSize)
         .build();
