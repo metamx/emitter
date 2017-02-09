@@ -293,9 +293,7 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
                   request.setHeader(HttpHeaders.Names.CONTENT_ENCODING, HttpHeaders.Values.GZIP);
                   break;
                 default:
-                  log.warn("Content encoding [$contentEncoding] is not supported. " +
-                           "The content will be sent without encoding");
-                  payload = serializeBatch(batch);
+                  throw new ISE("Unsupported content encoding [%s]", contentEncoding.name());
               }
             } else {
               payload = serializeBatch(batch);
