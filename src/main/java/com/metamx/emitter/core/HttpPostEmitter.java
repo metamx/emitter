@@ -31,12 +31,11 @@ import com.metamx.http.client.HttpClient;
 import com.metamx.http.client.Request;
 import com.metamx.http.client.response.StatusResponseHandler;
 import com.metamx.http.client.response.StatusResponseHolder;
-import org.jboss.netty.handler.codec.http.HttpMethod;
-
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.Flushable;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
@@ -52,6 +51,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.zip.GZIPOutputStream;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
+import org.jboss.netty.handler.codec.http.HttpMethod;
 
 public class HttpPostEmitter implements Flushable, Closeable, Emitter
 {
@@ -280,8 +282,24 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
           for (final List<byte[]> batch : batches) {
             log.debug("Sending batch to url[%s], batch.size[%,d]", url, batch.size());
 
-            final Request request = new Request(HttpMethod.POST, url)
-                .setContent("application/json", serializeBatch(batch));
+            final Request request = new Request(HttpMethod.POST, url);
+
+            byte[] payload = null;
+            ContentEncoding contentEncoding = config.getContentEncoding();
+            if (contentEncoding != null) {
+              switch (contentEncoding) {
+                case GZIP:
+                  payload = serializeAndCompressBatch(batch);
+                  request.setHeader(HttpHeaders.Names.CONTENT_ENCODING, HttpHeaders.Values.GZIP);
+                  break;
+                default:
+                  throw new ISE("Unsupported content encoding [%s]", contentEncoding.name());
+              }
+            } else {
+              payload = serializeBatch(batch);
+            }
+
+            request.setContent("application/json", payload);
 
             if (config.getBasicAuthentication() != null) {
               final String[] parts = config.getBasicAuthentication().split(":", 2);
@@ -347,30 +365,58 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
      * Serializes messages into a batch. Does not validate against maxBatchSize.
      *
      * @param messages list of JSON objects, one per message
-     *
      * @return serialized JSON array
      */
     private byte[] serializeBatch(List<byte[]> messages)
     {
       final ByteArrayOutputStream baos = new ByteArrayOutputStream();
       try {
-        boolean first = true;
-        baos.write(config.getBatchingStrategy().batchStart());
-        for (final byte[] message : messages) {
-          if (first) {
-            first = false;
-          } else {
-            baos.write(config.getBatchingStrategy().messageSeparator());
-          }
-          baos.write(message);
-        }
-        baos.write(config.getBatchingStrategy().batchEnd());
+        serializeTo(messages, baos);
         return baos.toByteArray();
       }
       catch (IOException e) {
         // There's no reason to have IOException in the signature of this method, since BAOS won't throw them.
         throw Throwables.propagate(e);
       }
+    }
+
+    /**
+     * Serialize and compress (gzip) messages into a batch.
+     *
+     * @param messages list of JSON objects, one per message
+     * @return serialized and compressed JSON array
+     */
+    private byte[] serializeAndCompressBatch(List<byte[]> messages) throws IOException
+    {
+      final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      try (
+          final GZIPOutputStream gzos = new GZIPOutputStream(baos)
+      ) {
+        serializeTo(messages, gzos);
+      }
+      return baos.toByteArray();
+    }
+
+    /**
+     * Serialize messages into a batch
+     *
+     * @param messages list of JSON objects, one per message
+     * @param os output stream with serialized batch
+     * @throws IOException if an I/O error occurs.
+     */
+    private void serializeTo(List<byte[]> messages, OutputStream os) throws IOException
+    {
+      boolean first = true;
+      os.write(config.getBatchingStrategy().batchStart());
+      for (final byte[] message : messages) {
+        if (first) {
+          first = false;
+        } else {
+          os.write(config.getBatchingStrategy().messageSeparator());
+        }
+        os.write(message);
+      }
+      os.write(config.getBatchingStrategy().batchEnd());
     }
 
     /**

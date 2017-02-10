@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.io.BaseEncoding;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.metamx.common.CompressionUtils;
 import com.metamx.emitter.service.UnitEvent;
 import com.metamx.http.client.GoHandler;
 import com.metamx.http.client.GoHandlers;
@@ -30,6 +31,15 @@ import com.metamx.http.client.Request;
 import com.metamx.http.client.response.HttpResponseHandler;
 import com.metamx.http.client.response.StatusResponseHandler;
 import com.metamx.http.client.response.StatusResponseHolder;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.net.URL;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -39,14 +49,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.io.IOException;
-import java.net.URL;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  */
@@ -82,8 +84,12 @@ public class EmitterTest
 
   private HttpPostEmitter timeBasedEmitter(long timeInMillis)
   {
+    HttpEmitterConfig config = new HttpEmitterConfig.Builder(TARGET_URL)
+        .setFlushMillis(timeInMillis)
+        .setFlushCount(Integer.MAX_VALUE)
+        .build();
     HttpPostEmitter emitter = new HttpPostEmitter(
-        new HttpEmitterConfig(timeInMillis, Integer.MAX_VALUE, TARGET_URL),
+        config,
         httpClient,
         jsonMapper
     );
@@ -93,8 +99,28 @@ public class EmitterTest
 
   private HttpPostEmitter sizeBasedEmitter(int size)
   {
+    HttpEmitterConfig config = new HttpEmitterConfig.Builder(TARGET_URL)
+        .setFlushMillis(Long.MAX_VALUE)
+        .setFlushCount(size)
+        .build();
     HttpPostEmitter emitter = new HttpPostEmitter(
-        new HttpEmitterConfig(Long.MAX_VALUE, size, TARGET_URL),
+        config,
+        httpClient,
+        jsonMapper
+    );
+    emitter.start();
+    return emitter;
+  }
+
+  private HttpPostEmitter sizeBasedEmitterWithContentEncoding(int size, ContentEncoding encoding)
+  {
+    HttpEmitterConfig config = new HttpEmitterConfig.Builder(TARGET_URL)
+        .setFlushMillis(Long.MAX_VALUE)
+        .setFlushCount(size)
+        .setContentEncoding(encoding)
+        .build();
+    HttpPostEmitter emitter = new HttpPostEmitter(
+        config,
         httpClient,
         jsonMapper
     );
@@ -104,16 +130,16 @@ public class EmitterTest
 
   private HttpPostEmitter manualFlushEmitterWithBasicAuthenticationAndNewlineSeparating(String authentication)
   {
+    HttpEmitterConfig config = new HttpEmitterConfig.Builder(TARGET_URL)
+        .setFlushMillis(Long.MAX_VALUE)
+        .setFlushCount(Integer.MAX_VALUE)
+        .setBasicAuthentication(authentication)
+        .setBatchingStrategy(BatchingStrategy.NEWLINES)
+        .setMaxBatchSize(1024 * 1024)
+        .setMaxBufferSize(100 * 1024 * 1024)
+        .build();
     HttpPostEmitter emitter = new HttpPostEmitter(
-        new HttpEmitterConfig(
-            Long.MAX_VALUE,
-            Integer.MAX_VALUE,
-            TARGET_URL,
-            authentication,
-            BatchingStrategy.NEWLINES,
-            1024 * 1024,
-            100 * 1024 * 1024
-        ),
+        config,
         httpClient,
         jsonMapper
     );
@@ -123,8 +149,14 @@ public class EmitterTest
 
   private HttpPostEmitter manualFlushEmitterWithBatchSizeAndBufferSize(int batchSize, long bufferSize)
   {
+    HttpEmitterConfig config = new HttpEmitterConfig.Builder(TARGET_URL)
+        .setFlushMillis(Long.MAX_VALUE)
+        .setFlushCount(Integer.MAX_VALUE)
+        .setMaxBatchSize(batchSize)
+        .setMaxBufferSize(bufferSize)
+        .build();
     HttpPostEmitter emitter = new HttpPostEmitter(
-        new HttpEmitterConfig(Long.MAX_VALUE, Integer.MAX_VALUE, TARGET_URL, batchSize, bufferSize),
+        config,
         httpClient,
         jsonMapper
     );
@@ -431,6 +463,61 @@ public class EmitterTest
     emitter.flush();
     waitForEmission(emitter);
     Assert.assertEquals(0, emitter.getBufferedSize());
+    closeNoFlush(emitter);
+    Assert.assertTrue(httpClient.succeeded());
+  }
+
+  @Test
+  public void testGzipContentEncoding() throws Exception
+  {
+    final List<UnitEvent> events = Arrays.asList(
+        new UnitEvent("plain-text", 1),
+        new UnitEvent("plain-text", 2)
+    );
+
+    emitter = sizeBasedEmitterWithContentEncoding(2, ContentEncoding.GZIP);
+
+    httpClient.setGoHandler(
+        new GoHandler()
+        {
+          @Override
+          public <Intermediate, Final> ListenableFuture<Final> go(Request request, HttpResponseHandler<Intermediate, Final> handler, Duration requestReadTimeout) throws Exception
+          {
+            Assert.assertEquals(new URL(TARGET_URL), request.getUrl());
+            Assert.assertEquals(
+                ImmutableList.of("application/json"),
+                request.getHeaders().get(HttpHeaders.Names.CONTENT_TYPE)
+            );
+            Assert.assertEquals(
+                ImmutableList.of(HttpHeaders.Values.GZIP),
+                request.getHeaders().get(HttpHeaders.Names.CONTENT_ENCODING)
+            );
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            CompressionUtils.gunzip(new ByteArrayInputStream(request.getContent().array()), baos);
+
+            Assert.assertEquals(
+                String.format(
+                    "[%s,%s]\n",
+                    jsonMapper.writeValueAsString(events.get(0)),
+                    jsonMapper.writeValueAsString(events.get(1))
+                ),
+                baos.toString(Charsets.UTF_8.name())
+            );
+            Assert.assertTrue(
+                "handler is a StatusResponseHandler",
+                handler instanceof StatusResponseHandler
+            );
+
+            return Futures.immediateFuture((Final) okResponse());
+          }
+        }.times(1)
+    );
+
+    for (UnitEvent event : events) {
+      emitter.emit(event);
+    }
+    waitForEmission(emitter);
     closeNoFlush(emitter);
     Assert.assertTrue(httpClient.succeeded());
   }
