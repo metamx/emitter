@@ -27,8 +27,8 @@ import java.io.IOException;
 
 public class ServiceEmitter implements Emitter
 {
-  private final ImmutableMap<String, String> serviceDimensions;
-  private final Emitter emitter;
+  protected final ImmutableMap<String, String> serviceDimensions;
+  protected final Emitter emitter;
 
   public ServiceEmitter(String service, String host, Emitter emitter)
   {
