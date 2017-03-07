@@ -23,7 +23,7 @@ import com.metamx.emitter.core.Emitter;
 public class CloudServiceEmitter extends ServiceEmitter
 {
   private static final String ENV_DIMENSION = "env";
-  private static final String LOCATION_DIMENSION = "location";
+  private static final String LOCATION_DIMENSION = "loc";
   private static final String ZONE_DIMENSION = "zone";
 
   public CloudServiceEmitter(
