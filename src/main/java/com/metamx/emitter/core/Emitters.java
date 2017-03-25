@@ -33,6 +33,7 @@ public class Emitters
 
   private static final String LOG_EMITTER_PROP = "com.metamx.emitter.logging";
   private static final String HTTP_EMITTER_PROP = "com.metamx.emitter.http";
+  private static final String PARAMETRIZED_HTTP_EMITTER_PROP = "com.metamx.emitter.parametrized";
 
   public static Emitter create(Properties props, HttpClient httpClient, Lifecycle lifecycle)
   {
@@ -48,6 +49,9 @@ public class Emitters
     }
     else if (props.getProperty(HTTP_EMITTER_PROP) != null) {
       jsonified.put("http", makeHttpMap(props));
+    }
+    else if (props.getProperty(PARAMETRIZED_HTTP_EMITTER_PROP) != null) {
+      jsonified.put("parametrized", makeParametrizedHttpMap(props));
     }
     else {
       throw new ISE("Unknown type of emitter. Please set [%s] or [%s]", LOG_EMITTER_PROP, HTTP_EMITTER_PROP);
@@ -89,6 +93,13 @@ public class Emitters
       httpMap.put("maxBufferSize", Long.parseLong(props.getProperty("com.metamx.emitter.http.maxBufferSize")));
     }
     return httpMap;
+  }
+
+  static Map<String, Object> makeParametrizedHttpMap(Properties props)
+  {
+    Map<String, Object> parametrizedMap = Maps.newHashMap();
+    parametrizedMap.put("httpEmitterProperties", makeHttpMap(props));
+    return parametrizedMap;
   }
 
   // Package-visible for unit tests

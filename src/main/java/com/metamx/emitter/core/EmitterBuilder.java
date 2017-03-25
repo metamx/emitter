@@ -20,6 +20,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.metamx.common.lifecycle.Lifecycle;
 import com.metamx.http.client.HttpClient;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  */
@@ -30,6 +32,9 @@ public class EmitterBuilder
 
   @JsonProperty("logging")
   private LoggingEmitterConfig loggingEmitterConfig = null;
+
+  @JsonProperty("parametrized")
+  private ParametrizedUriHttpEmitterConfig parametrizedUriHttpEmitterConfig = null;
 
   public HttpEmitterConfig getHttpEmitterConfig()
   {
@@ -51,12 +56,24 @@ public class EmitterBuilder
     this.loggingEmitterConfig = loggingEmitterConfig;
   }
 
+  public ParametrizedUriHttpEmitterConfig getParametrizedUriHttpEmitterConfig()
+  {
+    return parametrizedUriHttpEmitterConfig;
+  }
+
+  public void setParametrizedUriHttpEmitterConfig(ParametrizedUriHttpEmitterConfig parametrizedUriHttpEmitterConfig)
+  {
+    this.parametrizedUriHttpEmitterConfig = parametrizedUriHttpEmitterConfig;
+  }
+
   public Emitter build(ObjectMapper objectMapper, HttpClient httpClient, Lifecycle lifecycle)
   {
     if (loggingEmitterConfig != null) {
       return buildLogging(objectMapper, lifecycle);
     } else if (httpEmitterConfig != null) {
       return buildHttp(httpClient, objectMapper, lifecycle);
+    } else if (parametrizedUriHttpEmitterConfig != null) {
+      return buildParametrized(httpClient, objectMapper, lifecycle);
     } else {
       return buildNoop(lifecycle);
     }
@@ -79,6 +96,26 @@ public class EmitterBuilder
   public Emitter buildHttp(HttpClient httpClient, ObjectMapper objectMapper, Lifecycle lifecycle)
   {
     Emitter retVal = new HttpPostEmitter(httpEmitterConfig, httpClient, objectMapper);
+    lifecycle.addManagedInstance(retVal);
+    return retVal;
+  }
+
+  public Emitter buildParametrized(HttpClient httpClient, ObjectMapper objectMapper, Lifecycle lifecycle)
+  {
+    String baseUri = parametrizedUriHttpEmitterConfig.httpEmitterProperties.get("recipientBaseUrl").toString();
+    ParametrizedUriExtractor parametrizedUriExtractor = new ParametrizedUriExtractor(baseUri);
+    URIExtractor uriExtractor = parametrizedUriExtractor;
+    Set<String> onlyFeedParam = new HashSet<String>();
+    onlyFeedParam.add("feed");
+    if (parametrizedUriExtractor.params.equals(onlyFeedParam)) {
+      uriExtractor = new FeedUriExtractor(baseUri.replace("{feed}", "%s"));
+    }
+    Emitter retVal = new ParametrizedUriHttpPostEmitter(
+        parametrizedUriHttpEmitterConfig,
+        httpClient,
+        objectMapper,
+        uriExtractor
+    );
     lifecycle.addManagedInstance(retVal);
     return retVal;
   }
