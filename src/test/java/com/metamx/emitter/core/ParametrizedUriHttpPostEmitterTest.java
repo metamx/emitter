@@ -30,8 +30,8 @@ public class ParametrizedUriHttpPostEmitterTest
 {
   private static final ObjectMapper jsonMapper = new ObjectMapper();
 
-  MockHttpClient httpClient;
-  Lifecycle lifecycle;
+  private MockHttpClient httpClient;
+  private Lifecycle lifecycle;
 
   @Before
   public void setUp() throws Exception
@@ -47,7 +47,7 @@ public class ParametrizedUriHttpPostEmitterTest
     }
   }
 
-  Emitter parametrizedEmmiter(String uriPattern) throws Exception
+  private Emitter parametrizedEmmiter(String uriPattern) throws Exception
   {
     final Properties props = new Properties();
     props.setProperty("com.metamx.emitter.parametrized", "true");
