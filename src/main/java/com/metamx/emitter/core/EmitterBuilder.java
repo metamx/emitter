@@ -102,7 +102,7 @@ public class EmitterBuilder
 
   public Emitter buildParametrized(HttpClient httpClient, ObjectMapper objectMapper, Lifecycle lifecycle)
   {
-    String baseUri = parametrizedUriHttpEmitterConfig.httpEmitterProperties.get("recipientBaseUrl").toString();
+    String baseUri = parametrizedUriHttpEmitterConfig.getHttpEmitterProperties().get("recipientBaseUrl").toString();
     ParametrizedUriExtractor parametrizedUriExtractor = new ParametrizedUriExtractor(baseUri);
     URIExtractor uriExtractor = parametrizedUriExtractor;
     Set<String> onlyFeedParam = new HashSet<String>();

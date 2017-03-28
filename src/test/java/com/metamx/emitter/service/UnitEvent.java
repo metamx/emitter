@@ -19,6 +19,8 @@ package com.metamx.emitter.service;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.google.common.collect.ImmutableMap;
 import com.metamx.emitter.core.Event;
+import java.util.Collections;
+import java.util.HashMap;
 import org.joda.time.DateTime;
 
 import java.util.Map;
@@ -29,19 +31,19 @@ public class UnitEvent implements Event
 {
   private final String feed;
   private final Number value;
-  private final String targetURLKey;
+  private final Map<String, String> dimensions;
   private final DateTime createdTime;
 
   public UnitEvent(String feed, Number value)
   {
-    this(feed, value, TARGET_URL_KEY);
+    this(feed, value, Collections.<String, String>emptyMap());
   }
 
-  public UnitEvent(String feed, Number value, String targetURLKey)
+  public UnitEvent(String feed, Number value, Map<String, String> dimensions)
   {
     this.feed = feed;
     this.value = value;
-    this.targetURLKey = targetURLKey;
+    this.dimensions = dimensions;
 
     createdTime = new DateTime();
   }
@@ -50,10 +52,11 @@ public class UnitEvent implements Event
   @JsonValue
   public Map<String, Object> toMap()
   {
-    return ImmutableMap.<String, Object>of(
-        "feed", feed,
-        "metrics", ImmutableMap.of("value", value)
-    );
+    Map<String, Object> result = new HashMap<>();
+    result.putAll(dimensions);
+    result.put("feed", feed);
+    result.put("metrics", ImmutableMap.of("value", value));
+    return ImmutableMap.copyOf(result);
   }
 
   public DateTime getCreatedTime()
@@ -63,7 +66,7 @@ public class UnitEvent implements Event
 
   public String getFeed()
   {
-    return targetURLKey;
+    return feed;
   }
 
   public boolean isSafeToBuffer()
@@ -71,5 +74,4 @@ public class UnitEvent implements Event
     return true;
   }
 
-  public static final String TARGET_URL_KEY = "test";
 }

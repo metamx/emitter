@@ -8,7 +8,7 @@ import java.util.Map;
 public class ParametrizedUriHttpEmitterConfig
 {
   @JsonProperty
-  Map<String, Object> httpEmitterProperties;
+  private Map<String, Object> httpEmitterProperties;
 
   public Map<String, Object> getHttpEmitterProperties()
   {
