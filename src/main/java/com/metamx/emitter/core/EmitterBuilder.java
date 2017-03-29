@@ -19,12 +19,16 @@ package com.metamx.emitter.core;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.metamx.common.lifecycle.Lifecycle;
+import com.metamx.emitter.core.factory.EmitterFactory;
+import com.metamx.emitter.core.factory.HttpEmitterFactory;
+import com.metamx.emitter.core.factory.LoggingEmitterFactory;
+import com.metamx.emitter.core.factory.NoopEmiterFactory;
 import com.metamx.http.client.HttpClient;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
+ * @deprecated use implementation of {@link EmitterFactory}
  */
+@Deprecated
 public class EmitterBuilder
 {
   @JsonProperty("http")
@@ -32,9 +36,6 @@ public class EmitterBuilder
 
   @JsonProperty("logging")
   private LoggingEmitterConfig loggingEmitterConfig = null;
-
-  @JsonProperty("parametrized")
-  private ParametrizedUriHttpEmitterConfig parametrizedUriHttpEmitterConfig = null;
 
   public HttpEmitterConfig getHttpEmitterConfig()
   {
@@ -56,67 +57,40 @@ public class EmitterBuilder
     this.loggingEmitterConfig = loggingEmitterConfig;
   }
 
-  public ParametrizedUriHttpEmitterConfig getParametrizedUriHttpEmitterConfig()
-  {
-    return parametrizedUriHttpEmitterConfig;
-  }
-
-  public void setParametrizedUriHttpEmitterConfig(ParametrizedUriHttpEmitterConfig parametrizedUriHttpEmitterConfig)
-  {
-    this.parametrizedUriHttpEmitterConfig = parametrizedUriHttpEmitterConfig;
-  }
-
   public Emitter build(ObjectMapper objectMapper, HttpClient httpClient, Lifecycle lifecycle)
   {
     if (loggingEmitterConfig != null) {
       return buildLogging(objectMapper, lifecycle);
     } else if (httpEmitterConfig != null) {
       return buildHttp(httpClient, objectMapper, lifecycle);
-    } else if (parametrizedUriHttpEmitterConfig != null) {
-      return buildParametrized(httpClient, objectMapper, lifecycle);
     } else {
       return buildNoop(lifecycle);
     }
   }
 
+  /**
+   * @deprecated use {@link NoopEmiterFactory#build}
+   */
   public Emitter buildNoop(Lifecycle lifecycle)
   {
-    Emitter retVal = new NoopEmitter();
-    lifecycle.addManagedInstance(retVal);
-    return retVal;
+    return new NoopEmiterFactory().build(lifecycle);
   }
 
+  /**
+   * @deprecated use {@link LoggingEmitterFactory#build}
+   */
+  @Deprecated
   public Emitter buildLogging(ObjectMapper objectMapper, Lifecycle lifecycle)
   {
-    Emitter retVal = new LoggingEmitter(loggingEmitterConfig, objectMapper);
-    lifecycle.addManagedInstance(retVal);
-    return retVal;
+    return new LoggingEmitterFactory(loggingEmitterConfig).build(objectMapper, lifecycle);
   }
 
+  /**
+   * @deprecated use {@link HttpEmitterFactory#build}
+   */
+  @Deprecated
   public Emitter buildHttp(HttpClient httpClient, ObjectMapper objectMapper, Lifecycle lifecycle)
   {
-    Emitter retVal = new HttpPostEmitter(httpEmitterConfig, httpClient, objectMapper);
-    lifecycle.addManagedInstance(retVal);
-    return retVal;
-  }
-
-  public Emitter buildParametrized(HttpClient httpClient, ObjectMapper objectMapper, Lifecycle lifecycle)
-  {
-    String baseUri = parametrizedUriHttpEmitterConfig.getHttpEmitterProperties().get("recipientBaseUrl").toString();
-    ParametrizedUriExtractor parametrizedUriExtractor = new ParametrizedUriExtractor(baseUri);
-    URIExtractor uriExtractor = parametrizedUriExtractor;
-    Set<String> onlyFeedParam = new HashSet<String>();
-    onlyFeedParam.add("feed");
-    if (parametrizedUriExtractor.params.equals(onlyFeedParam)) {
-      uriExtractor = new FeedUriExtractor(baseUri.replace("{feed}", "%s"));
-    }
-    Emitter retVal = new ParametrizedUriHttpPostEmitter(
-        parametrizedUriHttpEmitterConfig,
-        httpClient,
-        objectMapper,
-        uriExtractor
-    );
-    lifecycle.addManagedInstance(retVal);
-    return retVal;
+    return new HttpEmitterFactory(httpEmitterConfig).build(objectMapper, httpClient, lifecycle);
   }
 }

@@ -3,7 +3,7 @@ package com.metamx.emitter.core;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-public class FeedUriExtractor implements URIExtractor
+public class FeedUriExtractor implements UriExtractor
 {
   private String uriPattern;
 

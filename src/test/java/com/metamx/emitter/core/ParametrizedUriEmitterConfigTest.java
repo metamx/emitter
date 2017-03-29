@@ -5,7 +5,7 @@ import java.util.Properties;
 import junit.framework.Assert;
 import org.junit.Test;
 
-public class ParametrizedUriHttpEmitterConfigTest
+public class ParametrizedUriEmitterConfigTest
 {
   @Test
   public void testDefaults()
@@ -14,7 +14,7 @@ public class ParametrizedUriHttpEmitterConfigTest
     props.put("com.metamx.emitter.http.url", "http://example.com/{key}");
 
     final ObjectMapper objectMapper = new ObjectMapper();
-    final ParametrizedUriHttpEmitterConfig paramConfig = objectMapper.convertValue(Emitters.makeParametrizedHttpMap(props), ParametrizedUriHttpEmitterConfig.class);
+    final ParametrizedUriEmitterConfig paramConfig = objectMapper.convertValue(Emitters.makeParametrizedHttpMap(props), ParametrizedUriEmitterConfig.class);
     final HttpEmitterConfig config = paramConfig.buildHttpEmitterConfig("http://example.com/topic", objectMapper);
 
     Assert.assertEquals(60000, config.getFlushMillis());
@@ -41,7 +41,7 @@ public class ParametrizedUriHttpEmitterConfigTest
     props.setProperty("com.metamx.emitter.http.flushTimeOut", "1000");
 
     final ObjectMapper objectMapper = new ObjectMapper();
-    final ParametrizedUriHttpEmitterConfig paramConfig = objectMapper.convertValue(Emitters.makeParametrizedHttpMap(props), ParametrizedUriHttpEmitterConfig.class);
+    final ParametrizedUriEmitterConfig paramConfig = objectMapper.convertValue(Emitters.makeParametrizedHttpMap(props), ParametrizedUriEmitterConfig.class);
     final HttpEmitterConfig config = paramConfig.buildHttpEmitterConfig("http://example.com/topic", objectMapper);
 
     Assert.assertEquals(1, config.getFlushMillis());

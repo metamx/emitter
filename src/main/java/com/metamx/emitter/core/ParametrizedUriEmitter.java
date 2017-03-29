@@ -13,20 +13,20 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ParametrizedUriHttpPostEmitter implements Flushable, Closeable, Emitter
+public class ParametrizedUriEmitter implements Flushable, Closeable, Emitter
 {
   private final Map<URI, HttpPostEmitter> emitters = new HashMap<URI, HttpPostEmitter>();
-  private URIExtractor uriExtractor;
+  private UriExtractor uriExtractor;
   private Lifecycle innerLifecycle = new Lifecycle();
   private HttpClient client;
   private ObjectMapper jsonMapper;
-  private ParametrizedUriHttpEmitterConfig config;
+  private ParametrizedUriEmitterConfig config;
 
-  public ParametrizedUriHttpPostEmitter(
-      ParametrizedUriHttpEmitterConfig config,
+  public ParametrizedUriEmitter(
+      ParametrizedUriEmitterConfig config,
       HttpClient client,
       ObjectMapper jsonMapper,
-      URIExtractor uriExtractor
+      UriExtractor uriExtractor
   )
   {
     this.config = config;
@@ -101,6 +101,4 @@ public class ParametrizedUriHttpPostEmitter implements Flushable, Closeable, Emi
       }
     }
   }
-
 }
-

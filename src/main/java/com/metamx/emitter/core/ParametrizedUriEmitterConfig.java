@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ParametrizedUriHttpEmitterConfig
+public class ParametrizedUriEmitterConfig
 {
   @JsonProperty
   private Map<String, Object> httpEmitterProperties;

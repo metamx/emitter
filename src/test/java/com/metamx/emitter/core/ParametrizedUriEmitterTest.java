@@ -26,7 +26,7 @@ import org.junit.Test;
 import static com.metamx.emitter.core.EmitterTest.okResponse;
 import static org.junit.Assert.assertEquals;
 
-public class ParametrizedUriHttpPostEmitterTest
+public class ParametrizedUriEmitterTest
 {
   private static final ObjectMapper jsonMapper = new ObjectMapper();
 
@@ -54,7 +54,7 @@ public class ParametrizedUriHttpPostEmitterTest
     props.setProperty("com.metamx.emitter.http.url", uriPattern);
     lifecycle = new Lifecycle();
     Emitter emitter = Emitters.create(props, httpClient, lifecycle);
-    assertEquals(ParametrizedUriHttpPostEmitter.class, emitter.getClass());
+    assertEquals(ParametrizedUriEmitter.class, emitter.getClass());
     lifecycle.start();
     return emitter;
   }

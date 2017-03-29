@@ -8,10 +8,10 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ParametrizedUriExtractor implements URIExtractor
+public class ParametrizedUriExtractor implements UriExtractor
 {
   private String uriPattern;
-  Set<String> params;
+  private Set<String> params;
 
   public ParametrizedUriExtractor(String uriPattern)
   {
@@ -21,6 +21,11 @@ public class ParametrizedUriExtractor implements URIExtractor
     while (keyMatcher.find()) {
       params.add(keyMatcher.group(1));
     }
+  }
+
+  public Set<String> getParams()
+  {
+    return params;
   }
 
   @Override
@@ -42,5 +47,4 @@ public class ParametrizedUriExtractor implements URIExtractor
     }
     return new URI(processedUri);
   }
-
 }
