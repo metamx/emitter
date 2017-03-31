@@ -58,14 +58,7 @@ public class Emitters
       jsonified.putAll(makeHttpMap(props));
     }
     else if (props.getProperty(CUSTOM_EMITTER_FACTORY_PROP) !=null) {
-      try {
-        jsonified = jsonMapper.readValue(props.getProperty(CUSTOM_EMITTER_FACTORY_PROP), new TypeReference<Map<String, Object>>()
-        {
-        });
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
+      jsonified = makeCustomFactoryMap(props);
     }
     else {
       throw new ISE(
@@ -132,5 +125,19 @@ public class Emitters
         "logLevel", props.getProperty("com.metamx.emitter.logging.level", "debug")
     );
     return loggingMap;
+  }
+
+  private static Map<String, Object> makeCustomFactoryMap(Properties props)
+  {
+    Map<String, Object> factoryMap = Maps.newHashMap();
+    String prefix = "com.metamx.emitter.";
+
+    for (Map.Entry<Object, Object> entry : props.entrySet()) {
+      String key = entry.getKey().toString();
+      if (key.startsWith(prefix) && !key.equals(CUSTOM_EMITTER_FACTORY_PROP)) {
+        factoryMap.put(key.substring(prefix.length()), entry.getValue());
+      }
+    }
+    return factoryMap;
   }
 }
