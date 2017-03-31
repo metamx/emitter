@@ -16,6 +16,7 @@
 
 package com.metamx.emitter.core;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Maps;
 import com.metamx.common.IAE;
@@ -28,6 +29,7 @@ import com.metamx.emitter.core.factory.LoggingEmitterFactory;
 import com.metamx.emitter.core.factory.ParametrizedUriEmitterFactory;
 import com.metamx.http.client.HttpClient;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
 
@@ -37,7 +39,6 @@ public class Emitters
 
   private static final String LOG_EMITTER_PROP = "com.metamx.emitter.logging";
   private static final String HTTP_EMITTER_PROP = "com.metamx.emitter.http";
-  private static final String PARAMETRIZED_HTTP_EMITTER_PROP = "com.metamx.emitter.parametrized";
   private static final String CUSTOM_EMITTER_FACTORY_PROP = "com.metamx.emitter.factory";
 
   public static Emitter create(Properties props, HttpClient httpClient, Lifecycle lifecycle)
@@ -48,39 +49,26 @@ public class Emitters
   public static Emitter create(Properties props, HttpClient httpClient, ObjectMapper jsonMapper, Lifecycle lifecycle)
   {
     Map<String, Object> jsonified = Maps.newHashMap();
-    Class<? extends EmitterFactory> emitterFactoryClass;
     if (props.getProperty(LOG_EMITTER_PROP) != null) {
-      jsonified.put("logging", makeLoggingMap(props));
-      emitterFactoryClass = LoggingEmitterFactory.class;
+      jsonified.put("type", "logging");
+      jsonified.putAll(makeLoggingMap(props));
     }
     else if (props.getProperty(HTTP_EMITTER_PROP) != null) {
-      jsonified.put("http", makeHttpMap(props));
-      emitterFactoryClass = HttpEmitterFactory.class;
-    }
-    else if (props.getProperty(PARAMETRIZED_HTTP_EMITTER_PROP) != null) {
-      jsonified.put("parametrized", makeParametrizedHttpMap(props));
-      emitterFactoryClass = ParametrizedUriEmitterFactory.class;
+      jsonified.put("type", "http");
+      jsonified.putAll(makeHttpMap(props));
     }
     else if (props.getProperty(CUSTOM_EMITTER_FACTORY_PROP) !=null) {
       jsonified = makeCustomFactoryMap(props);
-      try {
-        emitterFactoryClass = (Class<? extends EmitterFactory>) Class.forName(props.getProperty(CUSTOM_EMITTER_FACTORY_PROP));
-      }
-      catch (ClassNotFoundException e) {
-        throw new ISE(e, "Invalid class name set for [%s]", CUSTOM_EMITTER_FACTORY_PROP);
-      }
     }
     else {
       throw new ISE(
-          "Unknown type of emitter. Please set [%s], [%s], [%s] or provide class implementing com.metamx.emitter.core.factory.EmitterFactory via [%s]",
+          "Unknown type of emitter. Please set [%s], [%s] or provide JSON definition of a com.metamx.emitter.core.factory.EmitterFactory via [%s]",
           LOG_EMITTER_PROP,
           HTTP_EMITTER_PROP,
-          PARAMETRIZED_HTTP_EMITTER_PROP,
           CUSTOM_EMITTER_FACTORY_PROP
       );
     }
-
-    return jsonMapper.convertValue(jsonified, emitterFactoryClass).build(jsonMapper, httpClient, lifecycle);
+    return jsonMapper.convertValue(jsonified, EmitterFactory.class).build(jsonMapper, httpClient, lifecycle);
   }
 
   // Package-visible for unit tests
