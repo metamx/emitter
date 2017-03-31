@@ -15,8 +15,10 @@ import java.util.Set;
 
 public class ParametrizedUriEmitterFactory implements EmitterFactory
 {
-  @JsonProperty("parametrized")
+  @JsonProperty("config")
   private ParametrizedUriEmitterConfig parametrizedUriEmitterConfig = null;
+  @JsonProperty
+  private String recipientBaseUrl = null;
 
   public ParametrizedUriEmitterFactory() {}
 
@@ -28,7 +30,7 @@ public class ParametrizedUriEmitterFactory implements EmitterFactory
   @Override
   public Emitter build(ObjectMapper objectMapper, HttpClient httpClient, Lifecycle lifecycle)
   {
-    String baseUri = parametrizedUriEmitterConfig.getHttpEmitterProperties().get("recipientBaseUrl").toString();
+    String baseUri = recipientBaseUrl;
     ParametrizedUriExtractor parametrizedUriExtractor = new ParametrizedUriExtractor(baseUri);
     UriExtractor uriExtractor = parametrizedUriExtractor;
     Set<String> onlyFeedParam = new HashSet<>();
