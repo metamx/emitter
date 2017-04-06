@@ -168,7 +168,7 @@ class Batch extends AbstractQueuedLongSynchronizer
 
   private boolean tryAddNonFirstEvent(long state, byte[] event)
   {
-    int bufferOffset = tryReserveEventSizeAndLock(state,emitter.batchingStrategy.separatorLength() + event.length);
+    int bufferOffset = tryReserveEventSizeAndLock(state, emitter.batchingStrategy.separatorLength() + event.length);
     if (bufferOffset < 0) {
       return false;
     }

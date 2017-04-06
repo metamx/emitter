@@ -42,7 +42,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class HttpPostEmitterStressTest
 {
-  private static final int N = 100_000;
+  private static final int N = 10_000;
   private static final Future OK_FUTURE = Futures.immediateFuture(EmitterTest.OK_RESPONSE);
   private static final ObjectMapper objectMapper = new ObjectMapper()
   {
@@ -108,7 +108,12 @@ public class HttpPostEmitterStressTest
             event.index = events.getInt(i);
             eventBatches.add(emitter.emitAndReturnBatch(event));
             if (i % 16 == 0) {
-              Thread.yield();
+              try {
+                Thread.sleep(10);
+              }
+              catch (InterruptedException e) {
+                throw new RuntimeException(e);
+              }
             }
           }
           threadsCompleted.countDown();
