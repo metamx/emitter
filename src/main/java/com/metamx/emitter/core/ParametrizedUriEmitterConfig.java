@@ -1,30 +1,24 @@
 package com.metamx.emitter.core;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.HashMap;
-import java.util.Map;
 
 public class ParametrizedUriEmitterConfig
 {
-  @JsonProperty
-  private Map<String, Object> httpEmitterProperties;
+  @JsonProperty("http")
+  private HttpEmitterConfig.Builder basicHttpConficBuilder = new HttpEmitterConfig.Builder(null);
 
-  public Map<String, Object> getHttpEmitterProperties()
+  public HttpEmitterConfig.Builder getBasicHttpConficBuilder()
   {
-    return httpEmitterProperties;
+    return basicHttpConficBuilder;
   }
 
-  public void setHttpEmitterProperties(Map<String, Object> httpEmitterProperties)
+  public void setBasicHttpConficBuilder(HttpEmitterConfig.Builder basicHttpConficBuilder)
   {
-    this.httpEmitterProperties = httpEmitterProperties;
+    this.basicHttpConficBuilder = basicHttpConficBuilder;
   }
 
-
-  public HttpEmitterConfig buildHttpEmitterConfig(String baseUri, ObjectMapper jsonMapper)
+  public HttpEmitterConfig buildHttpEmitterConfig(String baseUri)
   {
-    Map<String, Object> jsonified = new HashMap<>(httpEmitterProperties);
-    jsonified.put("recipientBaseUrl", baseUri);
-    return jsonMapper.convertValue(jsonified, HttpEmitterConfig.class);
+    return basicHttpConficBuilder.copyWithRecipientBaseUrl(baseUri).build();
   }
 }

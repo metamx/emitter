@@ -9,12 +9,12 @@ import com.metamx.http.client.HttpClient;
 public class NoopEmiterFactory implements EmitterFactory
 {
   @Override
-  public Emitter build(ObjectMapper objectMapper, HttpClient httpClient, Lifecycle lifecycle)
+  public Emitter makeEmitter(ObjectMapper objectMapper, HttpClient httpClient, Lifecycle lifecycle)
   {
-    return build(lifecycle);
+    return makeEmitter(lifecycle);
   }
 
-  public Emitter build(Lifecycle lifecycle)
+  public Emitter makeEmitter(Lifecycle lifecycle)
   {
     Emitter retVal = new NoopEmitter();
     lifecycle.addManagedInstance(retVal);

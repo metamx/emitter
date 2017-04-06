@@ -11,14 +11,13 @@ public class ParametrizedUriEmitterConfigTest
   public void testDefaults()
   {
     final Properties props = new Properties();
-    props.put("com.metamx.emitter.http.url", "http://example.com/{key}");
 
     final ObjectMapper objectMapper = new ObjectMapper();
-    final ParametrizedUriEmitterConfig paramConfig = objectMapper.convertValue(Emitters.makeParametrizedHttpMap(props), ParametrizedUriEmitterConfig.class);
-    final HttpEmitterConfig config = paramConfig.buildHttpEmitterConfig("http://example.com/topic", objectMapper);
+    final ParametrizedUriEmitterConfig paramConfig = objectMapper.convertValue(Emitters.makeCustomFactoryMap(props), ParametrizedUriEmitterConfig.class);
+    final HttpEmitterConfig config = paramConfig.buildHttpEmitterConfig("http://example.com/topic");
 
     Assert.assertEquals(60000, config.getFlushMillis());
-    Assert.assertEquals(300, config.getFlushCount());
+    Assert.assertEquals(500, config.getFlushCount());
     Assert.assertEquals("http://example.com/topic", config.getRecipientBaseUrl());
     Assert.assertEquals(null, config.getBasicAuthentication());
     Assert.assertEquals(BatchingStrategy.ARRAY, config.getBatchingStrategy());
@@ -31,18 +30,17 @@ public class ParametrizedUriEmitterConfigTest
   public void testSettingEverything()
   {
     final Properties props = new Properties();
-    props.setProperty("com.metamx.emitter.flushMillis", "1");
-    props.setProperty("com.metamx.emitter.flushCount", "2");
-    props.setProperty("com.metamx.emitter.http.url", "http://example.com/{key}");
+    props.setProperty("com.metamx.emitter.http.flushMillis", "1");
+    props.setProperty("com.metamx.emitter.http.flushCount", "2");
     props.setProperty("com.metamx.emitter.http.basicAuthentication", "a:b");
-    props.setProperty("com.metamx.emitter.http.batchingStrategy", "newlines");
+    props.setProperty("com.metamx.emitter.http.batchingStrategy", "NEWLINES");
     props.setProperty("com.metamx.emitter.http.maxBatchSize", "4");
     props.setProperty("com.metamx.emitter.http.maxBufferSize", "8");
     props.setProperty("com.metamx.emitter.http.flushTimeOut", "1000");
 
     final ObjectMapper objectMapper = new ObjectMapper();
-    final ParametrizedUriEmitterConfig paramConfig = objectMapper.convertValue(Emitters.makeParametrizedHttpMap(props), ParametrizedUriEmitterConfig.class);
-    final HttpEmitterConfig config = paramConfig.buildHttpEmitterConfig("http://example.com/topic", objectMapper);
+    final ParametrizedUriEmitterConfig paramConfig = objectMapper.convertValue(Emitters.makeCustomFactoryMap(props), ParametrizedUriEmitterConfig.class);
+    final HttpEmitterConfig config = paramConfig.buildHttpEmitterConfig("http://example.com/topic");
 
     Assert.assertEquals(1, config.getFlushMillis());
     Assert.assertEquals(2, config.getFlushCount());

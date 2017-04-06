@@ -50,8 +50,8 @@ public class ParametrizedUriEmitterTest
   private Emitter parametrizedEmmiter(String uriPattern) throws Exception
   {
     final Properties props = new Properties();
-    props.setProperty("com.metamx.emitter.parametrized", "true");
-    props.setProperty("com.metamx.emitter.http.url", uriPattern);
+    props.setProperty("com.metamx.emitter.type", "parametrized");
+    props.setProperty("com.metamx.emitter.http.recipientBaseUrl", uriPattern);
     lifecycle = new Lifecycle();
     Emitter emitter = Emitters.create(props, httpClient, lifecycle);
     assertEquals(ParametrizedUriEmitter.class, emitter.getClass());

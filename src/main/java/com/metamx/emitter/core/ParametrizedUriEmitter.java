@@ -16,11 +16,11 @@ import java.util.Map;
 public class ParametrizedUriEmitter implements Flushable, Closeable, Emitter
 {
   private final Map<URI, HttpPostEmitter> emitters = new HashMap<URI, HttpPostEmitter>();
-  private UriExtractor uriExtractor;
-  private Lifecycle innerLifecycle = new Lifecycle();
-  private HttpClient client;
-  private ObjectMapper jsonMapper;
-  private ParametrizedUriEmitterConfig config;
+  private final UriExtractor uriExtractor;
+  private final Lifecycle innerLifecycle = new Lifecycle();
+  private final HttpClient client;
+  private final ObjectMapper jsonMapper;
+  private final ParametrizedUriEmitterConfig config;
 
   public ParametrizedUriEmitter(
       ParametrizedUriEmitterConfig config,
@@ -61,7 +61,7 @@ public class ParametrizedUriEmitter implements Flushable, Closeable, Emitter
           emitter = emitters.get(uri); // Double check that nobody else created emitter while we were waiting on lock
           if (emitter == null) {
             emitter = new HttpPostEmitter(
-                config.buildHttpEmitterConfig(uri.toString(), jsonMapper),
+                config.buildHttpEmitterConfig(uri.toString()),
                 client,
                 jsonMapper
             );

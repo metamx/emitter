@@ -69,28 +69,32 @@ public class EmitterBuilder
   }
 
   /**
-   * @deprecated use {@link NoopEmiterFactory#build}
+   * @deprecated use {@link NoopEmiterFactory#makeEmitter}
    */
   public Emitter buildNoop(Lifecycle lifecycle)
   {
-    return new NoopEmiterFactory().build(lifecycle);
+    return new NoopEmiterFactory().makeEmitter(lifecycle);
   }
 
   /**
-   * @deprecated use {@link LoggingEmitterFactory#build}
+   * @deprecated use {@link LoggingEmitterFactory#makeEmitter}
    */
   @Deprecated
   public Emitter buildLogging(ObjectMapper objectMapper, Lifecycle lifecycle)
   {
-    return new LoggingEmitterFactory(loggingEmitterConfig).build(objectMapper, lifecycle);
+    Emitter retVal = new LoggingEmitter(loggingEmitterConfig, objectMapper);
+    lifecycle.addManagedInstance(retVal);
+    return retVal;
   }
 
   /**
-   * @deprecated use {@link HttpEmitterFactory#build}
+   * @deprecated use {@link HttpEmitterFactory#makeEmitter}
    */
   @Deprecated
   public Emitter buildHttp(HttpClient httpClient, ObjectMapper objectMapper, Lifecycle lifecycle)
   {
-    return new HttpEmitterFactory(httpEmitterConfig).build(objectMapper, httpClient, lifecycle);
+    Emitter retVal = new HttpPostEmitter(httpEmitterConfig, httpClient, objectMapper);
+    lifecycle.addManagedInstance(retVal);
+    return retVal;
   }
 }
