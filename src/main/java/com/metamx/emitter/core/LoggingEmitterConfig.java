@@ -24,6 +24,7 @@ import javax.validation.constraints.NotNull;
  */
 public class LoggingEmitterConfig
 {
+
   @NotNull
   @JsonProperty
   private String loggerClass = LoggingEmitter.class.getName();
@@ -31,6 +32,10 @@ public class LoggingEmitterConfig
   @NotNull
   @JsonProperty
   private String logLevel = "info";
+
+  @NotNull
+  @JsonProperty
+  private String eventsToLog = "ALL";
 
   public String getLoggerClass()
   {
@@ -52,12 +57,23 @@ public class LoggingEmitterConfig
     this.logLevel = logLevel;
   }
 
+  public String getEventsToLog()
+  {
+    return eventsToLog;
+  }
+
+  public void setEventsToLog(String eventsToLog)
+  {
+    this.eventsToLog = eventsToLog;
+  }
+
   @Override
   public String toString()
   {
     return "LoggingEmitterConfig{" +
            "loggerClass='" + loggerClass + '\'' +
            ", logLevel='" + logLevel + '\'' +
+           ", eventsToLog='" + eventsToLog + '\'' +
            '}';
   }
 }

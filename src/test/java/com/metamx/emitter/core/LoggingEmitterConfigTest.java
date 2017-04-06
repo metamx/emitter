@@ -17,41 +17,44 @@
 package com.metamx.emitter.core;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.Properties;
 
 public class LoggingEmitterConfigTest
 {
   @Test
-  public void testDefaults()
+  public void testDefaults() throws Exception
   {
-    final Properties props = new Properties();
     final ObjectMapper objectMapper = new ObjectMapper();
-    final LoggingEmitterConfig config = objectMapper.convertValue(
-        Emitters.makeLoggingMap(props),
+    final LoggingEmitterConfig config = objectMapper.readValue(
+        "{}",
         LoggingEmitterConfig.class
     );
 
     Assert.assertEquals(LoggingEmitter.class.getName(), config.getLoggerClass());
-    Assert.assertEquals("debug", config.getLogLevel());
+    Assert.assertEquals("info", config.getLogLevel());
+    Assert.assertEquals("ALL", config.getEventsToLog());
   }
 
   @Test
-  public void testSettingEverything()
+  public void testSettingEverything() throws Exception
   {
-    final Properties props = new Properties();
-    props.setProperty("com.metamx.emitter.logging.class", "Foo");
-    props.setProperty("com.metamx.emitter.logging.level", "INFO");
-
     final ObjectMapper objectMapper = new ObjectMapper();
-    final LoggingEmitterConfig config = objectMapper.convertValue(
-        Emitters.makeLoggingMap(props),
+    final LoggingEmitterConfig config = objectMapper.readValue(
+        objectMapper.writeValueAsString(
+            objectMapper.readValue(
+                "{ \"loggerClass\": \"Foo\","
+                + "\"logLevel\": \"debug\","
+                + "\"eventsToLog\": \"alerts\" "
+                + "}",
+                LoggingEmitterConfig.class
+            )
+        ),
         LoggingEmitterConfig.class
     );
 
     Assert.assertEquals("Foo", config.getLoggerClass());
-    Assert.assertEquals("INFO", config.getLogLevel());
+    Assert.assertEquals("debug", config.getLogLevel());
+    Assert.assertEquals("alerts", config.getEventsToLog());
   }
 }

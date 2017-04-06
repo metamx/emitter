@@ -20,9 +20,12 @@ package com.metamx.emitter.core;
  */
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.metamx.common.ISE;
 import com.metamx.common.lifecycle.LifecycleStart;
 import com.metamx.common.lifecycle.LifecycleStop;
 import com.metamx.common.logger.Logger;
+import com.metamx.emitter.service.AlertEvent;
+import com.metamx.emitter.service.ServiceMetricEvent;
 
 import java.io.IOException;
 import java.util.concurrent.RejectedExecutionException;
@@ -34,19 +37,26 @@ public class LoggingEmitter implements Emitter
 {
   private final Logger log;
   private final Level level;
+  private final EventsToLog eventsToLog;
   private final ObjectMapper jsonMapper;
 
   private final AtomicBoolean started = new AtomicBoolean(false);
 
   public LoggingEmitter(LoggingEmitterConfig config, ObjectMapper jsonMapper)
   {
-    this(new Logger(config.getLoggerClass()), Level.toLevel(config.getLogLevel()), jsonMapper);
+    this(
+        new Logger(config.getLoggerClass()),
+        Level.toLevel(config.getLogLevel()),
+        EventsToLog.toEventsToLog(config.getEventsToLog()),
+        jsonMapper
+    );
   }
 
-  public LoggingEmitter(Logger log, Level level, ObjectMapper jsonMapper)
+  public LoggingEmitter(Logger log, Level level, EventsToLog eventsToLog, ObjectMapper jsonMapper)
   {
     this.log = log;
     this.level = level;
+    this.eventsToLog = eventsToLog;
     this.jsonMapper = jsonMapper;
   }
 
@@ -86,11 +96,31 @@ public class LoggingEmitter implements Emitter
   @Override
   public void emit(Event event)
   {
-    synchronized (started) {
-      if (!started.get()) {
-        throw new RejectedExecutionException("Service not started.");
-      }
+    if (!started.get()) {
+      throw new RejectedExecutionException("Service not started.");
     }
+
+    switch (eventsToLog) {
+      case ALL:
+        emitInternal(event);
+        break;
+      case ALERTS:
+        if (event instanceof AlertEvent) {
+          emitInternal(event);
+        }
+        break;
+      case METRICS:
+        if (event instanceof ServiceMetricEvent) {
+          emitInternal(event);
+        }
+        break;
+      default:
+        throw new ISE("unknown eventsToLog value [%s]. Supported values are ALL, ALERTS and METRICS.", eventsToLog);
+    }
+  }
+
+  private void emitInternal(Event event)
+  {
     try {
       final String message = "Event [%s]";
       switch (level) {
@@ -160,7 +190,8 @@ public class LoggingEmitter implements Emitter
     }
   }
 
-  public enum Level {
+  public enum Level
+  {
     TRACE,
     DEBUG,
     INFO,
@@ -170,6 +201,18 @@ public class LoggingEmitter implements Emitter
     public static Level toLevel(String name)
     {
       return Level.valueOf(name.toUpperCase());
+    }
+  }
+
+  public enum EventsToLog
+  {
+    METRICS,
+    ALERTS,
+    ALL;
+
+    public static EventsToLog toEventsToLog(String str)
+    {
+      return EventsToLog.valueOf(str.toUpperCase());
     }
   }
 }
