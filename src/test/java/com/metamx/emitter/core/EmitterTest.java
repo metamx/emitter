@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Metamarkets Group Inc.
+ * Copyright 2012 - 2017 Metamarkets Group Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,15 +31,6 @@ import com.metamx.http.client.Request;
 import com.metamx.http.client.response.HttpResponseHandler;
 import com.metamx.http.client.response.StatusResponseHandler;
 import com.metamx.http.client.response.StatusResponseHolder;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.net.URL;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -50,11 +41,24 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.net.URL;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  */
 public class EmitterTest
 {
   private static final ObjectMapper jsonMapper = new ObjectMapper();
+  public static final StatusResponseHolder OK_RESPONSE = new StatusResponseHolder(
+      new HttpResponseStatus(201, "Created"),
+      new StringBuilder("Yay")
+  );
   public static String TARGET_URL = "http://metrics.foo.bar/";
 
   MockHttpClient httpClient;
@@ -62,10 +66,7 @@ public class EmitterTest
 
   public static StatusResponseHolder okResponse()
   {
-    return new StatusResponseHolder(
-        new HttpResponseStatus(201, "Created"),
-        new StringBuilder("Yay")
-    );
+    return OK_RESPONSE;
   }
 
   @Before
@@ -205,7 +206,7 @@ public class EmitterTest
     for (UnitEvent event : events) {
       emitter.emit(event);
     }
-    waitForEmission(emitter);
+    waitForEmission(emitter, 0);
     closeNoFlush(emitter);
     Assert.assertTrue(httpClient.succeeded());
   }
@@ -221,7 +222,7 @@ public class EmitterTest
 
     httpClient.setGoHandler(GoHandlers.passingHandler(okResponse()).times(1));
     emitter.emit(new UnitEvent("test", 3));
-    waitForEmission(emitter);
+    waitForEmission(emitter, 0);
 
     httpClient.setGoHandler(GoHandlers.failingHandler());
     emitter.emit(new UnitEvent("test", 4));
@@ -262,7 +263,7 @@ public class EmitterTest
         timeWaited < timeBetweenEmissions * 2
     );
 
-    waitForEmission(emitter);
+    waitForEmission(emitter, 0);
 
     final CountDownLatch thisLatch = new CountDownLatch(1);
     httpClient.setGoHandler(
@@ -288,7 +289,7 @@ public class EmitterTest
         timeWaited < timeBetweenEmissions * 2
     );
 
-    waitForEmission(emitter);
+    waitForEmission(emitter, 1);
     closeNoFlush(emitter);
     Assert.assertTrue("httpClient.succeeded()", httpClient.succeeded());
   }
@@ -299,7 +300,7 @@ public class EmitterTest
     final UnitEvent event1 = new UnitEvent("test", 1);
     final UnitEvent event2 = new UnitEvent("test", 2);
     emitter = sizeBasedEmitter(1);
-    Assert.assertEquals(0, emitter.getBufferedSize());
+    Assert.assertEquals(0, emitter.getTotalEmittedEvents());
 
     httpClient.setGoHandler(
         new GoHandler()
@@ -319,14 +320,15 @@ public class EmitterTest
             Assert.assertNotNull(obj);
             return Futures.immediateFuture((Final) obj);
           }
-        }.times(1)
+        }.times(HttpPostEmitter.MAX_SEND_RETRIES)
     );
     emitter.emit(event1);
-    waitForEmission(emitter);
+    emitter.flush();
+    waitForEmission(emitter, 0);
     Assert.assertTrue(httpClient.succeeded());
 
-    // The event should still be queued up, since it failed and will want to be retried.
-    Assert.assertEquals(jsonMapper.writeValueAsString(event1).length(), emitter.getBufferedSize());
+    // Failed to emit the first event.
+    Assert.assertEquals(0, emitter.getTotalEmittedEvents());
 
     httpClient.setGoHandler(
         new GoHandler()
@@ -337,7 +339,7 @@ public class EmitterTest
           {
             Assert.assertEquals(
                 jsonMapper.convertValue(
-                    ImmutableList.of(event1.toMap(), event2.toMap()), List.class
+                    ImmutableList.of(event2.toMap()), List.class
                 ),
                 jsonMapper.readValue(request.getContent().toString(Charsets.UTF_8), List.class)
             );
@@ -348,10 +350,11 @@ public class EmitterTest
     );
 
     emitter.emit(event2);
-    waitForEmission(emitter);
+    emitter.flush();
+    waitForEmission(emitter, 1);
 
-    // Nothing should be queued up, since everything has succeeded.
-    Assert.assertEquals(0, emitter.getBufferedSize());
+    // Succeed to emit the second event.
+    Assert.assertEquals(1, emitter.getTotalEmittedEvents());
 
     closeNoFlush(emitter);
     Assert.assertTrue(httpClient.succeeded());
@@ -403,7 +406,7 @@ public class EmitterTest
       emitter.emit(event);
     }
     emitter.flush();
-    waitForEmission(emitter);
+    waitForEmission(emitter, 0);
     closeNoFlush(emitter);
     Assert.assertTrue(httpClient.succeeded());
   }
@@ -424,7 +427,7 @@ public class EmitterTest
     );
     final AtomicInteger counter = new AtomicInteger();
     emitter = manualFlushEmitterWithBatchSizeAndBufferSize(1024 * 1024, 5 * 1024 * 1024);
-    Assert.assertEquals(0, emitter.getBufferedSize());
+    Assert.assertEquals(0, emitter.getTotalEmittedEvents());
 
     httpClient.setGoHandler(
         new GoHandler()
@@ -458,11 +461,12 @@ public class EmitterTest
     for (UnitEvent event : events) {
       emitter.emit(event);
     }
-    Assert.assertEquals(jsonMapper.writeValueAsString(events).length() - events.size() - 1, emitter.getBufferedSize());
+    waitForEmission(emitter, 0);
+    Assert.assertEquals(2, emitter.getTotalEmittedEvents());
 
     emitter.flush();
-    waitForEmission(emitter);
-    Assert.assertEquals(0, emitter.getBufferedSize());
+    waitForEmission(emitter, 1);
+    Assert.assertEquals(4, emitter.getTotalEmittedEvents());
     closeNoFlush(emitter);
     Assert.assertTrue(httpClient.succeeded());
   }
@@ -517,7 +521,7 @@ public class EmitterTest
     for (UnitEvent event : events) {
       emitter.emit(event);
     }
-    waitForEmission(emitter);
+    waitForEmission(emitter, 0);
     closeNoFlush(emitter);
     Assert.assertTrue(httpClient.succeeded());
   }
@@ -533,22 +537,8 @@ public class EmitterTest
     emitter.close();
   }
 
-  private void waitForEmission(HttpPostEmitter emitter) throws InterruptedException
+  private void waitForEmission(HttpPostEmitter emitter, int batchNumber) throws Exception
   {
-    final CountDownLatch latch = new CountDownLatch(1);
-    emitter.getExec().execute(
-        new Runnable()
-        {
-          @Override
-          public void run()
-          {
-            latch.countDown();
-          }
-        }
-    );
-
-    if (!latch.await(10, TimeUnit.SECONDS)) {
-      Assert.fail("latch await() did not complete in 10 seconds");
-    }
+    emitter.waitForEmission(batchNumber);
   }
 }
