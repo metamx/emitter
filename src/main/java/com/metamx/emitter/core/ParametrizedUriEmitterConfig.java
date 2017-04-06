@@ -5,20 +5,20 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class ParametrizedUriEmitterConfig
 {
   @JsonProperty("http")
-  private HttpEmitterConfig.Builder basicHttpConficBuilder = new HttpEmitterConfig.Builder(null);
+  private HttpEmitterConfig.Builder basicHttpConfigBuilder = new HttpEmitterConfig.Builder(null);
 
-  public HttpEmitterConfig.Builder getBasicHttpConficBuilder()
+  public HttpEmitterConfig.Builder getBasicHttpConfigBuilder()
   {
-    return basicHttpConficBuilder;
+    return basicHttpConfigBuilder;
   }
 
-  public void setBasicHttpConficBuilder(HttpEmitterConfig.Builder basicHttpConficBuilder)
+  public void setBasicHttpConfigBuilder(HttpEmitterConfig.Builder basicHttpConfigBuilder)
   {
-    this.basicHttpConficBuilder = basicHttpConficBuilder;
+    this.basicHttpConfigBuilder = basicHttpConfigBuilder;
   }
 
   public HttpEmitterConfig buildHttpEmitterConfig(String baseUri)
   {
-    return basicHttpConficBuilder.copyWithRecipientBaseUrl(baseUri).build();
+    return basicHttpConfigBuilder.copyWithRecipientBaseUrl(baseUri).build();
   }
 }

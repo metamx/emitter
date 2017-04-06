@@ -19,7 +19,7 @@ public class ParametrizedUriEmitterFactory extends ParametrizedUriEmitterConfig 
   @Override
   public Emitter makeEmitter(ObjectMapper objectMapper, HttpClient httpClient, Lifecycle lifecycle)
   {
-    final String baseUri = this.getBasicHttpConficBuilder().build().getRecipientBaseUrl();
+    final String baseUri = this.getBasicHttpConfigBuilder().build().getRecipientBaseUrl();
     final ParametrizedUriExtractor parametrizedUriExtractor = new ParametrizedUriExtractor(baseUri);
     final Set<String> onlyFeedParam = new HashSet<>();
     onlyFeedParam.add("feed");
