@@ -16,9 +16,7 @@
 
 package com.metamx.emitter.core;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
@@ -252,8 +250,7 @@ public class HttpEmitterConfig
     private long maxBufferSize = DEFAULT_MAX_BUFFER_SIZE;
     private ContentEncoding contentEncoding = DEFAULT_CONTENT_ENCODING;
 
-    @JsonCreator
-    public Builder(@JsonProperty("recipientBaseUrl") String recipientBaseUrl)
+    public Builder(String recipientBaseUrl)
     {
       this.recipientBaseUrl = recipientBaseUrl;
     }

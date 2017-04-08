@@ -1,24 +1,27 @@
 package com.metamx.emitter.core;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import javax.validation.constraints.NotNull;
 
-public class ParametrizedUriEmitterConfig
+public class ParametrizedUriEmitterConfig extends HttpEmitterConfig.Builder
 {
-  @JsonProperty("http")
-  private HttpEmitterConfig.Builder basicHttpConfigBuilder = new HttpEmitterConfig.Builder(null);
+  private String recipientBaseUrlPattern;
 
-  public HttpEmitterConfig.Builder getBasicHttpConfigBuilder()
+  @JsonCreator
+  public ParametrizedUriEmitterConfig(@NotNull @JsonProperty("recipientBaseUrlPattern") String recipientBaseUrlPattern)
   {
-    return basicHttpConfigBuilder;
+    super(null);
+    this.recipientBaseUrlPattern = recipientBaseUrlPattern;
   }
 
-  public void setBasicHttpConfigBuilder(HttpEmitterConfig.Builder basicHttpConfigBuilder)
+  public String getRecipientBaseUrlPattern()
   {
-    this.basicHttpConfigBuilder = basicHttpConfigBuilder;
+    return recipientBaseUrlPattern;
   }
 
   public HttpEmitterConfig buildHttpEmitterConfig(String baseUri)
   {
-    return basicHttpConfigBuilder.copyWithRecipientBaseUrl(baseUri).build();
+    return copyWithRecipientBaseUrl(baseUri).build();
   }
 }

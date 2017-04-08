@@ -1,5 +1,7 @@
 package com.metamx.emitter.core.factory;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.metamx.common.lifecycle.Lifecycle;
 import com.metamx.emitter.core.Emitter;
@@ -11,15 +13,20 @@ import com.metamx.emitter.core.UriExtractor;
 import com.metamx.http.client.HttpClient;
 import java.util.HashSet;
 import java.util.Set;
+import javax.validation.constraints.NotNull;
 
 public class ParametrizedUriEmitterFactory extends ParametrizedUriEmitterConfig implements EmitterFactory
 {
-  public ParametrizedUriEmitterFactory() {}
+  @JsonCreator
+  public ParametrizedUriEmitterFactory(@NotNull @JsonProperty("recipientBaseUrlPattern") String recipientBaseUrlPattern)
+  {
+    super(recipientBaseUrlPattern);
+  }
 
   @Override
   public Emitter makeEmitter(ObjectMapper objectMapper, HttpClient httpClient, Lifecycle lifecycle)
   {
-    final String baseUri = this.getBasicHttpConfigBuilder().build().getRecipientBaseUrl();
+    final String baseUri = getRecipientBaseUrlPattern();
     final ParametrizedUriExtractor parametrizedUriExtractor = new ParametrizedUriExtractor(baseUri);
     final Set<String> onlyFeedParam = new HashSet<>();
     onlyFeedParam.add("feed");
