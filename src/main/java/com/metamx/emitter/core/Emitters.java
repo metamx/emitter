@@ -22,8 +22,9 @@ import com.metamx.common.IAE;
 import com.metamx.common.ISE;
 import com.metamx.common.lifecycle.Lifecycle;
 import com.metamx.common.logger.Logger;
+import com.metamx.emitter.core.factory.EmitterFactory;
 import com.metamx.http.client.HttpClient;
-
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
@@ -33,6 +34,7 @@ public class Emitters
 
   private static final String LOG_EMITTER_PROP = "com.metamx.emitter.logging";
   private static final String HTTP_EMITTER_PROP = "com.metamx.emitter.http";
+  private static final String CUSTOM_EMITTER_TYPE_PROP = "com.metamx.emitter.type";
 
   public static Emitter create(Properties props, HttpClient httpClient, Lifecycle lifecycle)
   {
@@ -42,18 +44,26 @@ public class Emitters
   public static Emitter create(Properties props, HttpClient httpClient, ObjectMapper jsonMapper, Lifecycle lifecycle)
   {
     Map<String, Object> jsonified = Maps.newHashMap();
-
     if (props.getProperty(LOG_EMITTER_PROP) != null) {
-      jsonified.put("logging", makeLoggingMap(props));
+      jsonified = makeLoggingMap(props);
+      jsonified.put("type", "logging");
     }
     else if (props.getProperty(HTTP_EMITTER_PROP) != null) {
-      jsonified.put("http", makeHttpMap(props));
+      jsonified = makeHttpMap(props);
+      jsonified.put("type", "http");
+    }
+    else if (props.getProperty(CUSTOM_EMITTER_TYPE_PROP) !=null) {
+      jsonified = makeCustomFactoryMap(props);
     }
     else {
-      throw new ISE("Unknown type of emitter. Please set [%s] or [%s]", LOG_EMITTER_PROP, HTTP_EMITTER_PROP);
+      throw new ISE(
+          "Unknown type of emitter. Please set [%s], [%s] or provide registered subtype of com.metamx.emitter.core.factory.EmitterFactory via [%s]",
+          LOG_EMITTER_PROP,
+          HTTP_EMITTER_PROP,
+          CUSTOM_EMITTER_TYPE_PROP
+      );
     }
-
-    return jsonMapper.convertValue(jsonified, EmitterBuilder.class).build(jsonMapper, httpClient, lifecycle);
+    return jsonMapper.convertValue(jsonified, EmitterFactory.class).makeEmitter(jsonMapper, httpClient, lifecycle);
   }
 
   // Package-visible for unit tests
@@ -103,5 +113,34 @@ public class Emitters
         "logLevel", props.getProperty("com.metamx.emitter.logging.level", "debug")
     );
     return loggingMap;
+  }
+
+  static Map<String, Object> makeCustomFactoryMap(Properties props)
+  {
+    Map<String, Object> factoryMap = Maps.newHashMap();
+    String prefix = "com.metamx.emitter.";
+
+    for (Map.Entry<Object, Object> entry : props.entrySet()) {
+      String key = entry.getKey().toString();
+      if (key.startsWith(prefix)) {
+        String combinedKey = key.substring(prefix.length());
+        Map<String, Object> currentLevelJson = factoryMap;
+        String currentKey = null;
+        String[] keyPath = combinedKey.split("\\.");
+
+        for (int i = 0; i < keyPath.length - 1; i++) {
+          String keyPart = keyPath[i];
+          Object nextLevelJson = currentLevelJson.get(keyPart);
+          if (nextLevelJson == null) {
+            nextLevelJson = new HashMap<String, Object>();
+            currentLevelJson.put(keyPart, nextLevelJson);
+          }
+          currentLevelJson = (Map<String, Object>) nextLevelJson;
+        }
+
+        currentLevelJson.put(keyPath[keyPath.length - 1], entry.getValue());
+      }
+    }
+    return factoryMap;
   }
 }

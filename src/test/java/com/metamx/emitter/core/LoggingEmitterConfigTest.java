@@ -17,10 +17,9 @@
 package com.metamx.emitter.core;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Properties;
 import junit.framework.Assert;
 import org.junit.Test;
-
-import java.util.Properties;
 
 public class LoggingEmitterConfigTest
 {
@@ -30,16 +29,46 @@ public class LoggingEmitterConfigTest
     final Properties props = new Properties();
     final ObjectMapper objectMapper = new ObjectMapper();
     final LoggingEmitterConfig config = objectMapper.convertValue(
+        Emitters.makeCustomFactoryMap(props),
+        LoggingEmitterConfig.class
+    );
+    Assert.assertEquals("getLoggerClass", LoggingEmitter.class.getName(), config.getLoggerClass());
+    Assert.assertEquals("getLogLevel", "info", config.getLogLevel());
+  }
+
+  @Test
+  public void testDefaultsLegacy()
+  {
+    final Properties props = new Properties();
+    final ObjectMapper objectMapper = new ObjectMapper();
+    final LoggingEmitterConfig config = objectMapper.convertValue(
         Emitters.makeLoggingMap(props),
         LoggingEmitterConfig.class
     );
 
-    Assert.assertEquals(LoggingEmitter.class.getName(), config.getLoggerClass());
-    Assert.assertEquals("debug", config.getLogLevel());
+    Assert.assertEquals("getLoggerClass", LoggingEmitter.class.getName(), config.getLoggerClass());
+    Assert.assertEquals("getLogLevel", "debug", config.getLogLevel());
   }
 
   @Test
   public void testSettingEverything()
+  {
+    final Properties props = new Properties();
+    props.setProperty("com.metamx.emitter.loggerClass", "Foo");
+    props.setProperty("com.metamx.emitter.logLevel", "INFO");
+
+    final ObjectMapper objectMapper = new ObjectMapper();
+    final LoggingEmitterConfig config = objectMapper.convertValue(
+        Emitters.makeCustomFactoryMap(props),
+        LoggingEmitterConfig.class
+    );
+
+    Assert.assertEquals("getLoggerClass", "Foo", config.getLoggerClass());
+    Assert.assertEquals("getLogLevel", "INFO", config.getLogLevel());
+  }
+
+  @Test
+  public void testSettingEverythingLegacy()
   {
     final Properties props = new Properties();
     props.setProperty("com.metamx.emitter.logging.class", "Foo");
@@ -51,7 +80,7 @@ public class LoggingEmitterConfigTest
         LoggingEmitterConfig.class
     );
 
-    Assert.assertEquals("Foo", config.getLoggerClass());
-    Assert.assertEquals("INFO", config.getLogLevel());
+    Assert.assertEquals("getLoggerClass", "Foo", config.getLoggerClass());
+    Assert.assertEquals("getLogLevel", "INFO", config.getLogLevel());
   }
 }

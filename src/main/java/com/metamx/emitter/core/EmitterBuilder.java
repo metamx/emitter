@@ -19,10 +19,16 @@ package com.metamx.emitter.core;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.metamx.common.lifecycle.Lifecycle;
+import com.metamx.emitter.core.factory.EmitterFactory;
+import com.metamx.emitter.core.factory.HttpEmitterFactory;
+import com.metamx.emitter.core.factory.LoggingEmitterFactory;
+import com.metamx.emitter.core.factory.NoopEmiterFactory;
 import com.metamx.http.client.HttpClient;
 
 /**
+ * @deprecated use implementation of {@link EmitterFactory}
  */
+@Deprecated
 public class EmitterBuilder
 {
   @JsonProperty("http")
@@ -62,13 +68,18 @@ public class EmitterBuilder
     }
   }
 
+  /**
+   * @deprecated use {@link NoopEmiterFactory#makeEmitter}
+   */
   public Emitter buildNoop(Lifecycle lifecycle)
   {
-    Emitter retVal = new NoopEmitter();
-    lifecycle.addManagedInstance(retVal);
-    return retVal;
+    return new NoopEmiterFactory().makeEmitter(lifecycle);
   }
 
+  /**
+   * @deprecated use {@link LoggingEmitterFactory#makeEmitter}
+   */
+  @Deprecated
   public Emitter buildLogging(ObjectMapper objectMapper, Lifecycle lifecycle)
   {
     Emitter retVal = new LoggingEmitter(loggingEmitterConfig, objectMapper);
@@ -76,6 +87,10 @@ public class EmitterBuilder
     return retVal;
   }
 
+  /**
+   * @deprecated use {@link HttpEmitterFactory#makeEmitter}
+   */
+  @Deprecated
   public Emitter buildHttp(HttpClient httpClient, ObjectMapper objectMapper, Lifecycle lifecycle)
   {
     Emitter retVal = new HttpPostEmitter(httpEmitterConfig, httpClient, objectMapper);
