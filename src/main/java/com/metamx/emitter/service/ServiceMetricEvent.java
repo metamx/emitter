@@ -136,60 +136,100 @@ public class ServiceMetricEvent implements ServiceEvent
       return this;
     }
 
+    /**
+     * @deprecated userX dimensions are deprecated. Use {@link #setDimension(String, String[])}
+     */
+    @Deprecated
     public Builder setUser1(String[] x)
     {
       userDims.put("user1", Arrays.asList(x));
       return this;
     }
 
+    /**
+     * @deprecated userX dimensions are deprecated. Use {@link #setDimension(String, String[])}
+     */
+    @Deprecated
     public Builder setUser2(String[] x)
     {
       userDims.put("user2", Arrays.asList(x));
       return this;
     }
 
+    /**
+     * @deprecated userX dimensions are deprecated. Use {@link #setDimension(String, String[])}
+     */
+    @Deprecated
     public Builder setUser3(String[] x)
     {
       userDims.put("user3", Arrays.asList(x));
       return this;
     }
 
+    /**
+     * @deprecated userX dimensions are deprecated. Use {@link #setDimension(String, String[])}
+     */
+    @Deprecated
     public Builder setUser4(String[] x)
     {
       userDims.put("user4", Arrays.asList(x));
       return this;
     }
 
+    /**
+     * @deprecated userX dimensions are deprecated. Use {@link #setDimension(String, String[])}
+     */
+    @Deprecated
     public Builder setUser5(String[] x)
     {
       userDims.put("user5", Arrays.asList(x));
       return this;
     }
 
+    /**
+     * @deprecated userX dimensions are deprecated. Use {@link #setDimension(String, String[])}
+     */
+    @Deprecated
     public Builder setUser6(String[] x)
     {
       userDims.put("user6", Arrays.asList(x));
       return this;
     }
 
+    /**
+     * @deprecated userX dimensions are deprecated. Use {@link #setDimension(String, String[])}
+     */
+    @Deprecated
     public Builder setUser7(String[] x)
     {
       userDims.put("user7", Arrays.asList(x));
       return this;
     }
 
+    /**
+     * @deprecated userX dimensions are deprecated. Use {@link #setDimension(String, String[])}
+     */
+    @Deprecated
     public Builder setUser8(String[] x)
     {
       userDims.put("user8", Arrays.asList(x));
       return this;
     }
 
+    /**
+     * @deprecated userX dimensions are deprecated. Use {@link #setDimension(String, String[])}
+     */
+    @Deprecated
     public Builder setUser9(String[] x)
     {
       userDims.put("user9", Arrays.asList(x));
       return this;
     }
 
+    /**
+     * @deprecated userX dimensions are deprecated. Use {@link #setDimension(String, String[])}
+     */
+    @Deprecated
     public Builder setUser10(String[] x)
     {
       userDims.put("user10", Arrays.asList(x));
@@ -202,60 +242,100 @@ public class ServiceMetricEvent implements ServiceEvent
       return this;
     }
 
+    /**
+     * @deprecated userX dimensions are deprecated. Use {@link #setDimension(String, String)}
+     */
+    @Deprecated
     public Builder setUser1(String x)
     {
       userDims.put("user1", x);
       return this;
     }
 
+    /**
+     * @deprecated userX dimensions are deprecated. Use {@link #setDimension(String, String)}
+     */
+    @Deprecated
     public Builder setUser2(String x)
     {
       userDims.put("user2", x);
       return this;
     }
 
+    /**
+     * @deprecated userX dimensions are deprecated. Use {@link #setDimension(String, String)}
+     */
+    @Deprecated
     public Builder setUser3(String x)
     {
       userDims.put("user3", x);
       return this;
     }
 
+    /**
+     * @deprecated userX dimensions are deprecated. Use {@link #setDimension(String, String)}
+     */
+    @Deprecated
     public Builder setUser4(String x)
     {
       userDims.put("user4", x);
       return this;
     }
 
+    /**
+     * @deprecated userX dimensions are deprecated. Use {@link #setDimension(String, String)}
+     */
+    @Deprecated
     public Builder setUser5(String x)
     {
       userDims.put("user5", x);
       return this;
     }
 
+    /**
+     * @deprecated userX dimensions are deprecated. Use {@link #setDimension(String, String)}
+     */
+    @Deprecated
     public Builder setUser6(String x)
     {
       userDims.put("user6", x);
       return this;
     }
 
+    /**
+     * @deprecated userX dimensions are deprecated. Use {@link #setDimension(String, String)}
+     */
+    @Deprecated
     public Builder setUser7(String x)
     {
       userDims.put("user7", x);
       return this;
     }
 
+    /**
+     * @deprecated userX dimensions are deprecated. Use {@link #setDimension(String, String)}
+     */
+    @Deprecated
     public Builder setUser8(String x)
     {
       userDims.put("user8", x);
       return this;
     }
 
+    /**
+     * @deprecated userX dimensions are deprecated. Use {@link #setDimension(String, String)}
+     */
+    @Deprecated
     public Builder setUser9(String x)
     {
       userDims.put("user9", x);
       return this;
     }
 
+    /**
+     * @deprecated userX dimensions are deprecated. Use {@link #setDimension(String, String)}
+     */
+    @Deprecated
     public Builder setUser10(String x)
     {
       userDims.put("user10", x);
@@ -268,24 +348,64 @@ public class ServiceMetricEvent implements ServiceEvent
       return this;
     }
 
+    /**
+     * @deprecated userX dimensions are deprecated. Use {@link #getDimension(String)}
+     */
+    @Deprecated
     public Object getUser1() { return userDims.get("user1"); }
 
+    /**
+     * @deprecated userX dimensions are deprecated. Use {@link #getDimension(String)}
+     */
+    @Deprecated
     public Object getUser2() { return userDims.get("user2"); }
 
+    /**
+     * @deprecated userX dimensions are deprecated. Use {@link #getDimension(String)}
+     */
+    @Deprecated
     public Object getUser3() { return userDims.get("user3"); }
 
+    /**
+     * @deprecated userX dimensions are deprecated. Use {@link #getDimension(String)}
+     */
+    @Deprecated
     public Object getUser4() { return userDims.get("user4"); }
 
+    /**
+     * @deprecated userX dimensions are deprecated. Use {@link #getDimension(String)}
+     */
+    @Deprecated
     public Object getUser5() { return userDims.get("user5"); }
 
+    /**
+     * @deprecated userX dimensions are deprecated. Use {@link #getDimension(String)}
+     */
+    @Deprecated
     public Object getUser6() { return userDims.get("user6"); }
 
+    /**
+     * @deprecated userX dimensions are deprecated. Use {@link #getDimension(String)}
+     */
+    @Deprecated
     public Object getUser7() { return userDims.get("user7"); }
 
+    /**
+     * @deprecated userX dimensions are deprecated. Use {@link #getDimension(String)}
+     */
+    @Deprecated
     public Object getUser8() { return userDims.get("user8"); }
 
+    /**
+     * @deprecated userX dimensions are deprecated. Use {@link #getDimension(String)}
+     */
+    @Deprecated
     public Object getUser9() { return userDims.get("user9"); }
 
+    /**
+     * @deprecated userX dimensions are deprecated. Use {@link #getDimension(String)}
+     */
+    @Deprecated
     public Object getUser10() { return userDims.get("user10"); }
 
     public Object getDimension(String dim)
