@@ -23,6 +23,7 @@ import com.google.common.io.BaseEncoding;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.metamx.common.CompressionUtils;
+import com.metamx.common.lifecycle.Lifecycle;
 import com.metamx.emitter.service.UnitEvent;
 import com.metamx.http.client.GoHandler;
 import com.metamx.http.client.GoHandlers;
@@ -47,6 +48,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -113,6 +115,24 @@ public class EmitterTest
     return emitter;
   }
 
+  private HttpPostEmitter sizeBasedEmitterGeneralizedCreation(int size)
+  {
+    Properties props = new Properties();
+    props.setProperty("com.metamx.emitter.type", "http");
+    props.setProperty("com.metamx.emitter.recipientBaseUrl", TARGET_URL);
+    props.setProperty("com.metamx.emitter.flushMillis", String.valueOf(Long.MAX_VALUE));
+    props.setProperty("com.metamx.emitter.flushCount", String.valueOf(size));
+
+    Lifecycle lifecycle = new Lifecycle();
+    Emitter emitter = Emitters.create(props, httpClient, jsonMapper, lifecycle);
+    Assert.assertTrue(String.format(
+        "HttpPostEmitter emitter should be created, but found %s",
+        emitter.getClass().getName()
+    ), emitter instanceof HttpPostEmitter);
+    emitter.start();
+    return (HttpPostEmitter) emitter;
+  }
+
   private HttpPostEmitter sizeBasedEmitterWithContentEncoding(int size, ContentEncoding encoding)
   {
     HttpEmitterConfig config = new HttpEmitterConfig.Builder(TARGET_URL)
@@ -173,6 +193,52 @@ public class EmitterTest
         new UnitEvent("test", 2)
     );
     emitter = sizeBasedEmitter(2);
+
+    httpClient.setGoHandler(
+        new GoHandler()
+        {
+          @Override
+          public <Intermediate, Final> ListenableFuture<Final> go(Request request, HttpResponseHandler<Intermediate, Final> handler, Duration requestReadTimeout) throws Exception
+          {
+            Assert.assertEquals(new URL(TARGET_URL), request.getUrl());
+            Assert.assertEquals(
+                ImmutableList.of("application/json"),
+                request.getHeaders().get(HttpHeaders.Names.CONTENT_TYPE)
+            );
+            Assert.assertEquals(
+                String.format(
+                    "[%s,%s]\n",
+                    jsonMapper.writeValueAsString(events.get(0)),
+                    jsonMapper.writeValueAsString(events.get(1))
+                ),
+                request.getContent().toString(Charsets.UTF_8)
+            );
+            Assert.assertTrue(
+                "handler is a StatusResponseHandler",
+                handler instanceof StatusResponseHandler
+            );
+
+            return Futures.immediateFuture((Final) okResponse());
+          }
+        }.times(1)
+    );
+
+    for (UnitEvent event : events) {
+      emitter.emit(event);
+    }
+    waitForEmission(emitter, 0);
+    closeNoFlush(emitter);
+    Assert.assertTrue(httpClient.succeeded());
+  }
+
+  @Test
+  public void testSanityWithGeneralizedCreation() throws Exception
+  {
+    final List<UnitEvent> events = Arrays.asList(
+        new UnitEvent("test", 1),
+        new UnitEvent("test", 2)
+    );
+    emitter = sizeBasedEmitterGeneralizedCreation(2);
 
     httpClient.setGoHandler(
         new GoHandler()

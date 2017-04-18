@@ -17,7 +17,6 @@
 package com.metamx.emitter.core;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
@@ -251,8 +250,23 @@ public class HttpEmitterConfig
     private long maxBufferSize = DEFAULT_MAX_BUFFER_SIZE;
     private ContentEncoding contentEncoding = DEFAULT_CONTENT_ENCODING;
 
-    public Builder(String recipientBaseUrl) {
+    public Builder(String recipientBaseUrl)
+    {
       this.recipientBaseUrl = recipientBaseUrl;
+    }
+
+    public Builder copyWithRecipientBaseUrl(String recipientBaseUrl)
+    {
+      Builder b = new Builder(recipientBaseUrl);
+      b.setBasicAuthentication(this.basicAuthentication)
+       .setBatchingStrategy(this.batchingStrategy)
+       .setContentEncoding(this.contentEncoding)
+       .setFlushCount(this.flushCount)
+       .setFlushMillis(this.flushMillis)
+       .setFlushTimeOut(this.flushTimeOut)
+       .setMaxBatchSize(this.maxBatchSize)
+       .setMaxBufferSize(this.maxBufferSize);
+      return b;
     }
 
     public Builder setFlushMillis(long flushMillis)

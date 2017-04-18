@@ -38,6 +38,7 @@ public class ServiceMetricEvent implements ServiceEvent
   private final DateTime createdTime;
   private final ImmutableMap<String, String> serviceDims;
   private final Map<String, Object> userDims;
+  private final String feed;
   private final String metric;
   private final Number value;
 
@@ -45,6 +46,7 @@ public class ServiceMetricEvent implements ServiceEvent
       DateTime createdTime,
       ImmutableMap<String, String> serviceDims,
       Map<String, Object> userDims,
+      String feed,
       String metric,
       Number value
   )
@@ -52,6 +54,7 @@ public class ServiceMetricEvent implements ServiceEvent
     this.createdTime = createdTime != null ? createdTime : new DateTime();
     this.serviceDims = serviceDims;
     this.userDims = userDims;
+    this.feed = feed;
     this.metric = metric;
     this.value = value;
   }
@@ -63,7 +66,7 @@ public class ServiceMetricEvent implements ServiceEvent
 
   public String getFeed()
   {
-    return "metrics";
+    return feed;
   }
 
   public String getService()
@@ -125,6 +128,13 @@ public class ServiceMetricEvent implements ServiceEvent
   public static class Builder
   {
     private final Map<String, Object> userDims = Maps.newTreeMap();
+    private String feed = "metrics";
+
+    public Builder setFeed(String feed)
+    {
+      this.feed = feed;
+      return this;
+    }
 
     public Builder setUser1(String[] x)
     {
@@ -313,6 +323,7 @@ public class ServiceMetricEvent implements ServiceEvent
               createdTime,
               serviceDimensions,
               userDims,
+              feed,
               metric,
               value
           );
