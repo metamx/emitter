@@ -25,7 +25,7 @@
     </parent>
 
     <artifactId>emitter</artifactId>
-    <version>0.4.6-SNAPSHOT</version>
+    <version>0.5.0-SNAPSHOT</version>
 
     <name>${project.groupId}:${project.artifactId}</name>
     <description>Emit events to logger or an http service</description>
@@ -134,6 +134,9 @@
                 <configuration>
                     <source>1.7</source>
                     <target>1.7</target>
+                    <compilerArgs>
+                        <arg>-Xlint:deprecation</arg>
+                    </compilerArgs>
                 </configuration>
             </plugin>
             <plugin>

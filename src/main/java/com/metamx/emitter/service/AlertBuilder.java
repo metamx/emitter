@@ -57,6 +57,12 @@ public class AlertBuilder
     return this;
   }
 
+  public AlertBuilder addData(Map<String, Object> data)
+  {
+    dataMap.putAll(data);
+    return this;
+  }
+
   public AlertBuilder severity(AlertEvent.Severity severity)
   {
     this.severity = severity;
