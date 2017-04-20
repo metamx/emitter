@@ -35,7 +35,6 @@ public class AlertEventTest
     AlertEvent event = AlertBuilder.create("blargy")
         .addData("something1", "a")
         .addData("something2", "b")
-        .build()
         .build("test", "localhost");
 
     Assert.assertEquals(
@@ -60,7 +59,6 @@ public class AlertEventTest
          .severity(Severity.ANOMALY)
          .addData("something1", "a")
          .addData("something2", "b")
-         .build()
          .build("test", "localhost");
 
     Assert.assertEquals(
@@ -85,7 +83,6 @@ public class AlertEventTest
          .severity(Severity.COMPONENT_FAILURE)
          .addData("something1", "a")
          .addData("something2", "b")
-         .build()
          .build("test", "localhost");
 
     Assert.assertEquals(
@@ -110,7 +107,6 @@ public class AlertEventTest
         .severity(Severity.SERVICE_FAILURE)
         .addData("something1", "a")
         .addData("something2", "b")
-        .build()
         .build("test", "localhost");
 
     Assert.assertEquals(
@@ -148,22 +144,22 @@ public class AlertEventTest
       );
 
       Assert.assertEquals(
-        contents(AlertBuilder.create(desc).addData("a","1").addData("b","2").build().build(service, host)),
+        contents(AlertBuilder.create(desc).addData("a","1").addData("b","2").build(service, host)),
         contents(new AlertEvent(service, host, Severity.COMPONENT_FAILURE, desc, data))
       );
 
       Assert.assertEquals(
-        contents(AlertBuilder.create(desc).addData(data).build().build(service, host)),
+        contents(AlertBuilder.create(desc).addData(data).build(service, host)),
         contents(new AlertEvent(service, host, Severity.COMPONENT_FAILURE, desc, data))
       );
 
       Assert.assertEquals(
-        contents(AlertBuilder.create(desc).severity(severity).addData("a","1").addData("b","2").build().build(service, host)),
+        contents(AlertBuilder.create(desc).severity(severity).addData("a","1").addData("b","2").build(service, host)),
         contents(new AlertEvent(service, host, severity, desc, data))
       );
 
       Assert.assertEquals(
-        contents(AlertBuilder.create(desc).severity(severity).addData(data).build().build(service, host)),
+        contents(AlertBuilder.create(desc).severity(severity).addData(data).build(service, host)),
         contents(new AlertEvent(service, host, severity, desc, data))
       );
     }

@@ -24,7 +24,7 @@ import java.util.Map;
 
 /**
 */
-public class AlertBuilder
+public class AlertBuilder extends ServiceEventBuilder<AlertEvent>
 {
   protected final Map<String, Object> dataMap = Maps.newLinkedHashMap();
   protected final String description;
@@ -69,16 +69,10 @@ public class AlertBuilder
     return this;
   }
 
-  public ServiceEventBuilder<AlertEvent> build()
+  @Override
+  public AlertEvent build(ImmutableMap<String, String> serviceDimensions)
   {
-    return new ServiceEventBuilder<AlertEvent>()
-    {
-      @Override
-      public AlertEvent build(ImmutableMap<String, String> serviceDimensions)
-      {
-        return new AlertEvent(new DateTime(), serviceDimensions, severity, description, dataMap);
-      }
-    };
+    return new AlertEvent(new DateTime(), serviceDimensions, severity, description, dataMap);
   }
 
   public void emit()
@@ -87,6 +81,6 @@ public class AlertBuilder
       throw new UnsupportedOperationException("Emitter is null, cannot emit.");
     }
 
-    emitter.emit(build());
+    emitter.emit(this);
   }
 }
