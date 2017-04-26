@@ -20,7 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicates;
+import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.metamx.common.ISE;
 import com.metamx.common.RetryUtils;
@@ -41,6 +41,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
+import java.util.ArrayDeque;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
@@ -92,7 +93,7 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
 
   private final Object startLock = new Object();
   private final CountDownLatch startLatch = new CountDownLatch(1);
-  private boolean started = false;
+  private boolean running = false;
 
   public HttpPostEmitter(HttpEmitterConfig config, HttpClient client)
   {
@@ -139,11 +140,11 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
   public void start()
   {
     synchronized (startLock) {
-      if (!started) {
+      if (!running) {
         if (startLatch.getCount() == 0) {
           throw new IllegalStateException("Already started.");
         }
-        started = true;
+        running = true;
         startLatch.countDown();
         emittingThread.start();
       }
@@ -280,10 +281,11 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
   public void close() throws IOException
   {
     synchronized (startLock) {
-      if (started) {
-        started = false;
+      if (running) {
+        running = false;
         Batch lastBatch = concurrentBatch.getAndSet(null);
         flush(lastBatch);
+        emittingThread.shuttingDown = true;
         // Emitter is interrupted after the last batch is flushed.
         emittingThread.interrupt();
       }
@@ -292,6 +294,8 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
 
   private class EmittingThread extends Thread
   {
+    private final ArrayDeque<FailedBuffer> failedBuffers = new ArrayDeque<>();
+    private boolean shuttingDown = false;
     private ZeroCopyByteArrayOutputStream gzipBaos;
 
     EmittingThread()
@@ -308,25 +312,30 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
         try {
           emitLargeEvents();
           emitBatches();
+          tryEmitOneFailedBuffer();
+
+          if (needsToShutdown) {
+            tryEmitAndDrainAllFailedBuffers();
+            // Make GC life easier
+            drainBuffersToReuse();
+            return;
+          }
         }
         catch (Throwable t) {
           log.error(t, "Uncaught exception in EmittingThread.run()");
         }
-        if (needsToShutdown) {
-          // Make GC life easier
-          drainBuffersToReuse();
-          return;
+        if (failedBuffers.isEmpty()) {
+          // Waiting for 1/2 of config.getFlushMillis() in order to flush events not more than 50% later than specified.
+          // If nanos=0 parkNanos() doesn't wait at all, that we don't want.
+          long waitNanos = Math.max(TimeUnit.MILLISECONDS.toNanos(config.getFlushMillis()) / 2, 1);
+          LockSupport.parkNanos(HttpPostEmitter.this, waitNanos);
         }
-        // Waiting for 1/2 of config.getFlushMillis() in order to flush events not more than 50% later than specified.
-        // If nanos=0 parkNanos() doesn't wait at all, that we don't want.
-        long waitNanos = Math.max(TimeUnit.MILLISECONDS.toNanos(config.getFlushMillis()) / 2, 1);
-        LockSupport.parkNanos(HttpPostEmitter.this, waitNanos);
       }
     }
 
     private boolean needsToShutdown()
     {
-      boolean needsToShutdown = Thread.interrupted();
+      boolean needsToShutdown = Thread.interrupted() || shuttingDown;
       if (needsToShutdown) {
         Batch lastBatch = concurrentBatch.getAndSet(null);
         if (lastBatch != null) {
@@ -370,15 +379,17 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
         );
         int bufferEndOffset = batchingStrategy.writeBatchEnd(batch.buffer, bufferWatermark);
 
-        sendWithRetries(batch.buffer, bufferEndOffset, eventCount);
+        if (sendWithRetries(batch.buffer, bufferEndOffset, eventCount)) {
+          buffersToReuse.add(batch.buffer);
+        } else {
+          failedBuffers.add(new FailedBuffer(batch.buffer, bufferEndOffset, eventCount));
+        }
       }
       finally {
-        buffersToReuse.add(batch.buffer);
-        // Notify HttpPostEmitter.flush(), that the batch is emitted.
+        // Notify HttpPostEmitter.flush(), that the batch is emitted (or failed).
         emittedBatchCounter.batchEmitted(batch.batchNumber);
       }
     }
-
 
     private void emitLargeEvents()
     {
@@ -400,15 +411,36 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
       System.arraycopy(eventBytes, 0, buffer, bufferOffset, eventBytes.length);
       bufferOffset += eventBytes.length;
       bufferOffset = batchingStrategy.writeBatchEnd(buffer, bufferOffset);
-      try {
-        sendWithRetries(buffer, bufferOffset, 1);
-      }
-      finally {
+      if (sendWithRetries(buffer, bufferOffset, 1)) {
         buffersToReuse.add(buffer);
+      } else {
+        failedBuffers.add(new FailedBuffer(buffer, bufferOffset, 1));
       }
     }
 
-    private void sendWithRetries(final byte[] buffer, final int length, final int eventCount)
+    private void tryEmitOneFailedBuffer()
+    {
+      FailedBuffer failedBuffer = failedBuffers.peek();
+      if (failedBuffer != null) {
+        if (sendWithRetries(failedBuffer.buffer, failedBuffer.length, failedBuffer.eventCount)) {
+          // Remove from the queue of failed buffer.
+          failedBuffers.poll();
+          buffersToReuse.add(failedBuffer.buffer);
+        }
+      }
+    }
+
+    private void tryEmitAndDrainAllFailedBuffers()
+    {
+      for (FailedBuffer failedBuffer; (failedBuffer = failedBuffers.poll()) != null; ) {
+        sendWithRetries(failedBuffer.buffer, failedBuffer.length, failedBuffer.eventCount);
+      }
+    }
+
+    /**
+     * Returns true if sent successfully.
+     */
+    private boolean sendWithRetries(final byte[] buffer, final int length, final int eventCount)
     {
       try {
         RetryUtils.retry(
@@ -421,13 +453,25 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
                 return null;
               }
             },
-            Predicates.<Throwable>alwaysTrue(),
+            new Predicate<Throwable>()
+            {
+              @Override
+              public boolean apply(Throwable input)
+              {
+                return !(input instanceof InterruptedException);
+              }
+            },
             MAX_SEND_RETRIES
         );
         totalEmittedEvents.addAndGet(eventCount);
+        return true;
+      }
+      catch (InterruptedException e) {
+        return false;
       }
       catch (Exception e) {
         log.error(e, "Failed to send events to url[%s]", config.getRecipientBaseUrl());
+        return false;
       }
     }
 
@@ -492,7 +536,21 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
       } else {
         gzipBaos.reset();
       }
-      return new GZIPOutputStream(gzipBaos);
+      return new GZIPOutputStream(gzipBaos, true);
+    }
+  }
+
+  private static class FailedBuffer
+  {
+    final byte[] buffer;
+    final int length;
+    final int eventCount;
+
+    private FailedBuffer(byte[] buffer, int length, int eventCount)
+    {
+      this.buffer = buffer;
+      this.length = length;
+      this.eventCount = eventCount;
     }
   }
 

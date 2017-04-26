@@ -42,14 +42,14 @@ public enum BatchingStrategy
     public int writeBatchStart(byte[] buffer)
     {
       buffer[0] = '[';
-      return 1;
+      return batchStartLength();
     }
 
     @Override
     public int writeMessageSeparator(byte[] buffer, int bufferOffset)
     {
       buffer[bufferOffset] = ',';
-      return bufferOffset + 1;
+      return bufferOffset + separatorLength();
     }
 
     @Override
@@ -57,7 +57,7 @@ public enum BatchingStrategy
     {
       buffer[bufferOffset] = ']';
       buffer[bufferOffset + 1] = '\n';
-      return bufferOffset + 2;
+      return bufferOffset + batchEndLength();
     }
   },
   NEWLINES {
@@ -84,14 +84,14 @@ public enum BatchingStrategy
     public int writeBatchStart(byte[] buffer)
     {
       // Write nothing
-      return 0;
+      return batchStartLength();
     }
 
     @Override
     public int writeMessageSeparator(byte[] buffer, int bufferOffset)
     {
       buffer[bufferOffset] = '\n';
-      return bufferOffset + 1;
+      return bufferOffset + separatorLength();
     }
 
     @Override

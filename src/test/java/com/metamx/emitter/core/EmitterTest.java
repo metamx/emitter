@@ -386,7 +386,7 @@ public class EmitterTest
             Assert.assertNotNull(obj);
             return Futures.immediateFuture((Final) obj);
           }
-        }.times(HttpPostEmitter.MAX_SEND_RETRIES)
+        }
     );
     emitter.emit(event1);
     emitter.flush();
@@ -403,26 +403,19 @@ public class EmitterTest
           public <Intermediate, Final> ListenableFuture<Final> go(Request request, HttpResponseHandler<Intermediate, Final> handler, Duration requestReadTimeout)
               throws Exception
           {
-            Assert.assertEquals(
-                jsonMapper.convertValue(
-                    ImmutableList.of(event2.toMap()), List.class
-                ),
-                jsonMapper.readValue(request.getContent().toString(Charsets.UTF_8), List.class)
-            );
-
             return Futures.immediateFuture((Final) okResponse());
           }
-        }.times(1)
+        }.times(2)
     );
 
     emitter.emit(event2);
     emitter.flush();
     waitForEmission(emitter, 1);
-
-    // Succeed to emit the second event.
-    Assert.assertEquals(1, emitter.getTotalEmittedEvents());
-
     closeNoFlush(emitter);
+
+    // Succeed to emit both events.
+    Assert.assertEquals(2, emitter.getTotalEmittedEvents());
+
     Assert.assertTrue(httpClient.succeeded());
   }
 
