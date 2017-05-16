@@ -58,8 +58,7 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
 {
   private static final int MAX_EVENT_SIZE = 1023 * 1024; // Set max size slightly less than 1M to allow for metadata
 
-  @VisibleForTesting
-  static final int MAX_SEND_RETRIES = 3;
+  private static final int MAX_SEND_RETRIES = 3;
   /**
    * Used in {@link EmittingThread#emitLargeEvents()} to ensure fair emitting of both large events and batched events.
    */
@@ -425,7 +424,10 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
         if (sendWithRetries(failedBuffer.buffer, failedBuffer.length, failedBuffer.eventCount)) {
           // Remove from the queue of failed buffer.
           failedBuffers.poll();
-          buffersToReuse.add(failedBuffer.buffer);
+          // Don't add the failed buffer back to the buffersToReuse queue here, because in a situation when we were not
+          // able to emit events for a while we don't have a way to discard buffers that were used to accumulate events
+          // during that period, if they are added back to buffersToReuse. For instance it may result in having 100
+          // buffers in rotation even if we need just 2.
         }
       }
     }
