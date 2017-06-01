@@ -304,7 +304,7 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
             if (config.getBasicAuthentication() != null) {
               final String[] parts = config.getBasicAuthentication().split(":", 2);
               final String user = parts[0];
-              final String password = parts.length > 0 ? parts[1] : "";
+              final String password = parts.length > 1 ? parts[1] : "";
               request.setBasicAuthentication(user, password);
             }
 
