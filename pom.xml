@@ -25,7 +25,7 @@
     </parent>
 
     <artifactId>emitter</artifactId>
-    <version>0.5.1-SNAPSHOT</version>
+    <version>0.5.1-rc1-SNAPSHOT</version>
 
     <name>${project.groupId}:${project.artifactId}</name>
     <description>Emit events to logger or an http service</description>
@@ -122,6 +122,12 @@
             <version>${http-client.version}</version>
             <type>test-jar</type>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>it.unimi.dsi</groupId>
+          <artifactId>fastutil</artifactId>
+          <version>7.1.0</version>
+          <scope>test</scope>
         </dependency>
     </dependencies>
 

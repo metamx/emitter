@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2015 Metamarkets Group Inc.
+ * Copyright 2012 - 2017 Metamarkets Group Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,55 +19,134 @@ package com.metamx.emitter.core;
 public enum BatchingStrategy
 {
   ARRAY {
-    private final byte[] START = new byte[]{'['};
-    private final byte[] SEPARATOR = new byte[]{','};
-    private final byte[] END = new byte[]{']', '\n'};
 
     @Override
-    public byte[] batchStart()
+    public int batchStartLength()
     {
-      return START;
+      return 1;
     }
 
     @Override
-    public byte[] messageSeparator()
+    public int separatorLength()
     {
-      return SEPARATOR;
+      return 1;
     }
 
     @Override
-    public byte[] batchEnd()
+    public int batchEndLength()
     {
-      return END;
+      return 2;
+    }
+
+    @Override
+    public int writeBatchStart(byte[] buffer)
+    {
+      buffer[0] = '[';
+      return batchStartLength();
+    }
+
+    @Override
+    public int writeMessageSeparator(byte[] buffer, int bufferOffset)
+    {
+      buffer[bufferOffset] = ',';
+      return bufferOffset + separatorLength();
+    }
+
+    @Override
+    public int writeBatchEnd(byte[] buffer, int bufferOffset)
+    {
+      buffer[bufferOffset] = ']';
+      buffer[bufferOffset + 1] = '\n';
+      return bufferOffset + batchEndLength();
     }
   },
   NEWLINES {
-    private final byte[] START = new byte[0];
-    private final byte[] SEPARATOR = new byte[]{'\n'};
-    private final byte[] END = new byte[]{'\n'};
 
     @Override
-    public byte[] batchStart()
+    public int batchStartLength()
     {
-      return START;
+      return 0;
     }
 
     @Override
-    public byte[] messageSeparator()
+    public int separatorLength()
     {
-      return SEPARATOR;
+      return 1;
     }
 
     @Override
-    public byte[] batchEnd()
+    public int batchEndLength()
     {
-      return END;
+      return 1;
+    }
+
+    @Override
+    public int writeBatchStart(byte[] buffer)
+    {
+      // Write nothing
+      return batchStartLength();
+    }
+
+    @Override
+    public int writeMessageSeparator(byte[] buffer, int bufferOffset)
+    {
+      buffer[bufferOffset] = '\n';
+      return bufferOffset + separatorLength();
+    }
+
+    @Override
+    public int writeBatchEnd(byte[] buffer, int bufferOffset)
+    {
+      return writeMessageSeparator(buffer, bufferOffset);
+    }
+  },
+  ONLY_EVENTS {
+    @Override
+    public int batchStartLength()
+    {
+      return 0;
+    }
+
+    @Override
+    public int separatorLength()
+    {
+      return 0;
+    }
+
+    @Override
+    public int batchEndLength()
+    {
+      return 0;
+    }
+
+    @Override
+    public int writeBatchStart(byte[] buffer)
+    {
+      return 0;
+    }
+
+    @Override
+    public int writeMessageSeparator(byte[] buffer, int bufferOffset)
+    {
+      return bufferOffset;
+    }
+
+    @Override
+    public int writeBatchEnd(byte[] buffer, int bufferOffset)
+    {
+      return bufferOffset;
     }
   };
 
-  public abstract byte[] batchStart();
+  public abstract int batchStartLength();
 
-  public abstract byte[] messageSeparator();
+  public abstract int separatorLength();
 
-  public abstract byte[] batchEnd();
+  public abstract int batchEndLength();
+
+  public abstract int writeBatchStart(byte[] buffer);
+
+  public abstract int writeMessageSeparator(byte[] buffer, int bufferOffset);
+
+  public abstract int writeBatchEnd(byte[] buffer, int bufferOffset);
 }
