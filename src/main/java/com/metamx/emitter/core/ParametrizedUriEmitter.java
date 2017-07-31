@@ -1,10 +1,12 @@
 package com.metamx.emitter.core;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableSet;
 import com.metamx.common.lifecycle.Lifecycle;
 import com.metamx.common.lifecycle.LifecycleStart;
 import com.metamx.common.lifecycle.LifecycleStop;
 import com.metamx.http.client.HttpClient;
+
 import java.io.Closeable;
 import java.io.Flushable;
 import java.io.IOException;
@@ -12,15 +14,38 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class ParametrizedUriEmitter implements Flushable, Closeable, Emitter
 {
+  private static final Set<String> ONLY_FEED_PARAM = ImmutableSet.of("feed");
+
+  private static UriExtractor makeUriExtractor(ParametrizedUriEmitterConfig config)
+  {
+    final String baseUri = config.getRecipientBaseUrlPattern();
+    final ParametrizedUriExtractor parametrizedUriExtractor = new ParametrizedUriExtractor(baseUri);
+    UriExtractor uriExtractor = parametrizedUriExtractor;
+    if (parametrizedUriExtractor.getParams().equals(ONLY_FEED_PARAM)) {
+      uriExtractor = new FeedUriExtractor(baseUri.replace("{feed}", "%s"));
+    }
+    return uriExtractor;
+  }
+
   private final Map<URI, HttpPostEmitter> emitters = new HashMap<URI, HttpPostEmitter>();
   private final UriExtractor uriExtractor;
   private final Lifecycle innerLifecycle = new Lifecycle();
   private final HttpClient client;
   private final ObjectMapper jsonMapper;
   private final ParametrizedUriEmitterConfig config;
+
+  public ParametrizedUriEmitter(
+      ParametrizedUriEmitterConfig config,
+      HttpClient client,
+      ObjectMapper jsonMapper
+  )
+  {
+    this(config, client, jsonMapper, makeUriExtractor(config));
+  }
 
   public ParametrizedUriEmitter(
       ParametrizedUriEmitterConfig config,
