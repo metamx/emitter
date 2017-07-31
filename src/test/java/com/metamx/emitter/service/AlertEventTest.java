@@ -32,10 +32,9 @@ public class AlertEventTest
   @Test
   public void testStupid() throws Exception
   {
-    AlertEvent event = new AlertEvent.Builder()
+    AlertEvent event = AlertBuilder.create("blargy")
         .addData("something1", "a")
         .addData("something2", "b")
-        .build("blargy")
         .build("test", "localhost");
 
     Assert.assertEquals(
@@ -56,11 +55,11 @@ public class AlertEventTest
   @Test
   public void testAnomaly() throws Exception
   {
-    AlertEvent event = new AlertEvent.Builder()
-        .addData("something1", "a")
-        .addData("something2", "b")
-        .build(Severity.ANOMALY, "blargy")
-        .build("test", "localhost");
+    AlertEvent event = AlertBuilder.create("blargy")
+         .severity(Severity.ANOMALY)
+         .addData("something1", "a")
+         .addData("something2", "b")
+         .build("test", "localhost");
 
     Assert.assertEquals(
         ImmutableMap.<String, Object>builder()
@@ -80,11 +79,11 @@ public class AlertEventTest
   @Test
   public void testComponentFailure() throws Exception
   {
-    AlertEvent event = new AlertEvent.Builder()
-        .addData("something1", "a")
-        .addData("something2", "b")
-        .build(Severity.COMPONENT_FAILURE, "blargy")
-        .build("test", "localhost");
+    AlertEvent event = AlertBuilder.create("blargy")
+         .severity(Severity.COMPONENT_FAILURE)
+         .addData("something1", "a")
+         .addData("something2", "b")
+         .build("test", "localhost");
 
     Assert.assertEquals(
         ImmutableMap.<String, Object>builder()
@@ -104,10 +103,10 @@ public class AlertEventTest
   @Test
   public void testServiceFailure() throws Exception
   {
-    AlertEvent event = new AlertEvent.Builder()
+    AlertEvent event = AlertBuilder.create("blargy")
+        .severity(Severity.SERVICE_FAILURE)
         .addData("something1", "a")
         .addData("something2", "b")
-        .build(Severity.SERVICE_FAILURE, "blargy")
         .build("test", "localhost");
 
     Assert.assertEquals(
@@ -145,22 +144,22 @@ public class AlertEventTest
       );
 
       Assert.assertEquals(
-        contents(new AlertEvent.Builder().addData("a","1").addData("b","2").build(desc).build(service, host)),
+        contents(AlertBuilder.create(desc).addData("a","1").addData("b","2").build(service, host)),
         contents(new AlertEvent(service, host, Severity.COMPONENT_FAILURE, desc, data))
       );
 
       Assert.assertEquals(
-        contents(new AlertEvent.Builder().build(desc, data).build(service, host)),
+        contents(AlertBuilder.create(desc).addData(data).build(service, host)),
         contents(new AlertEvent(service, host, Severity.COMPONENT_FAILURE, desc, data))
       );
 
       Assert.assertEquals(
-        contents(new AlertEvent.Builder().addData("a","1").addData("b","2").build(severity, desc).build(service, host)),
+        contents(AlertBuilder.create(desc).severity(severity).addData("a","1").addData("b","2").build(service, host)),
         contents(new AlertEvent(service, host, severity, desc, data))
       );
 
       Assert.assertEquals(
-        contents(new AlertEvent.Builder().build(severity, desc, data).build(service, host)),
+        contents(AlertBuilder.create(desc).severity(severity).addData(data).build(service, host)),
         contents(new AlertEvent(service, host, severity, desc, data))
       );
     }

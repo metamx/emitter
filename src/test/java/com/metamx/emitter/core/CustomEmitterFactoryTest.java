@@ -6,10 +6,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.metamx.common.lifecycle.Lifecycle;
 import com.metamx.emitter.core.factory.EmitterFactory;
 import com.metamx.http.client.HttpClient;
+import org.junit.Assert;
+import org.junit.Test;
+
 import java.io.IOException;
 import java.util.Properties;
-import junit.framework.Assert;
-import org.junit.Test;
 
 public class CustomEmitterFactoryTest
 {

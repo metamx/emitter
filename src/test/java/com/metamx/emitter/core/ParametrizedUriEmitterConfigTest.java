@@ -1,9 +1,10 @@
 package com.metamx.emitter.core;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.Properties;
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.junit.Test;
+
+import java.util.Properties;
 
 public class ParametrizedUriEmitterConfigTest
 {
