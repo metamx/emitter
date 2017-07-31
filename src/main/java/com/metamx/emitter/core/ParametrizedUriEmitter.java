@@ -1,21 +1,23 @@
 package com.metamx.emitter.core;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Throwables;
 import com.metamx.common.lifecycle.Lifecycle;
 import com.metamx.common.lifecycle.LifecycleStart;
 import com.metamx.common.lifecycle.LifecycleStop;
 import com.metamx.http.client.HttpClient;
+
 import java.io.Closeable;
 import java.io.Flushable;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class ParametrizedUriEmitter implements Flushable, Closeable, Emitter
 {
-  private final Map<URI, HttpPostEmitter> emitters = new HashMap<URI, HttpPostEmitter>();
+  private final ConcurrentMap<URI, HttpPostEmitter> emitters = new ConcurrentHashMap<>();
   private final UriExtractor uriExtractor;
   private final Lifecycle innerLifecycle = new Lifecycle();
   private final HttpClient client;
@@ -57,31 +59,28 @@ public class ParametrizedUriEmitter implements Flushable, Closeable, Emitter
       URI uri = uriExtractor.apply(event);
       HttpPostEmitter emitter = emitters.get(uri);
       if (emitter == null) {
-        synchronized (emitters) {
-          emitter = emitters.get(uri); // Double check that nobody else created emitter while we were waiting on lock
-          if (emitter == null) {
-            emitter = new HttpPostEmitter(
-                config.buildHttpEmitterConfig(uri.toString()),
-                client,
-                jsonMapper
+        emitter = emitters.computeIfAbsent(uri, u -> {
+          try {
+            return innerLifecycle.addMaybeStartManagedInstance(
+                new HttpPostEmitter(
+                    config.buildHttpEmitterConfig(u.toString()),
+                    client,
+                    jsonMapper
+                )
             );
-
-            innerLifecycle.addMaybeStartManagedInstance(emitter);
-
-            emitters.put(uri, emitter);
           }
-        }
+          catch (Exception e) {
+            throw Throwables.propagate(e);
+          }
+        });
       }
       emitter.emit(event);
-    }
-    catch (RuntimeException e) {
-      throw e;
     }
     catch (URISyntaxException e) {
       throw new RuntimeException(String.format("Failed to extract URI for event: %s", event.toMap().toString()));
     }
     catch (Exception e) {
-      throw new RuntimeException(e);
+      throw Throwables.propagate(e);
     }
   }
 
@@ -95,10 +94,23 @@ public class ParametrizedUriEmitter implements Flushable, Closeable, Emitter
   @Override
   public void flush() throws IOException
   {
-    synchronized (emitters) {
-      for (Emitter emitter : emitters.values()) {
-        emitter.flush();
+    Exception thrown = null;
+    for (HttpPostEmitter httpPostEmitter : emitters.values()) {
+      try {
+        httpPostEmitter.flush();
       }
+      catch (Exception e) {
+        if (thrown == null) {
+          thrown = e;
+        } else {
+          if (thrown != e) {
+            thrown.addSuppressed(e);
+          }
+        }
+      }
+    }
+    if (thrown != null) {
+      throw Throwables.propagate(thrown);
     }
   }
 }
