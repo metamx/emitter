@@ -13,11 +13,14 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 public class ParametrizedUriEmitter implements Flushable, Closeable, Emitter
 {
-  private final ConcurrentMap<URI, HttpPostEmitter> emitters = new ConcurrentHashMap<>();
+  /**
+   * Type should be ConcurrentHashMap, not {@link java.util.concurrent.ConcurrentMap}, because the latter _doesn't_
+   * guarantee that the lambda passed to {@link java.util.Map#computeIfAbsent} is executed at most once.
+   */
+  private final ConcurrentHashMap<URI, HttpPostEmitter> emitters = new ConcurrentHashMap<>();
   private final UriExtractor uriExtractor;
   private final Lifecycle innerLifecycle = new Lifecycle();
   private final HttpClient client;
@@ -100,6 +103,13 @@ public class ParametrizedUriEmitter implements Flushable, Closeable, Emitter
         httpPostEmitter.flush();
       }
       catch (Exception e) {
+        // If flush was interrupted, exit the loop
+        if (Thread.currentThread().isInterrupted()) {
+          if (thrown != null) {
+            e.addSuppressed(thrown);
+          }
+          throw Throwables.propagate(e);
+        }
         if (thrown == null) {
           thrown = e;
         } else {
