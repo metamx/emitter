@@ -207,7 +207,7 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
         return batch;
       }
       // Spin loop, until the thread calling onSealExclusive() updates the concurrentBatch. This update becomes visible
-      // eventually, because concurrentBatch field is volatile.
+      // eventually, because concurrentBatch.get() is a volatile read.
     }
   }
 
@@ -285,7 +285,7 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
         Batch lastBatch = concurrentBatch.getAndSet(null);
         flush(lastBatch);
         emittingThread.shuttingDown = true;
-        // Emitter is interrupted after the last batch is flushed.
+        // EmittingThread is interrupted after the last batch is flushed.
         emittingThread.interrupt();
       }
     }
@@ -325,7 +325,7 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
         }
         if (failedBuffers.isEmpty()) {
           // Waiting for 1/2 of config.getFlushMillis() in order to flush events not more than 50% later than specified.
-          // If nanos=0 parkNanos() doesn't wait at all, that we don't want.
+          // If nanos=0 parkNanos() doesn't wait at all, then we don't want.
           long waitNanos = Math.max(TimeUnit.MILLISECONDS.toNanos(config.getFlushMillis()) / 2, 1);
           LockSupport.parkNanos(HttpPostEmitter.this, waitNanos);
         }
