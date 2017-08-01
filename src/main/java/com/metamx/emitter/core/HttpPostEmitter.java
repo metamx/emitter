@@ -161,6 +161,8 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
       }
     }
     catch (InterruptedException e) {
+      log.debug("Interrupted waiting for start");
+      Thread.currentThread().interrupt();
       throw new RuntimeException(e);
     }
   }
