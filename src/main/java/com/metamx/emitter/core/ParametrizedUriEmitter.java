@@ -25,7 +25,7 @@ public class ParametrizedUriEmitter implements Flushable, Closeable, Emitter
     final String baseUri = config.getRecipientBaseUrlPattern();
     final ParametrizedUriExtractor parametrizedUriExtractor = new ParametrizedUriExtractor(baseUri);
     UriExtractor uriExtractor = parametrizedUriExtractor;
-    if (parametrizedUriExtractor.getParams().equals(ONLY_FEED_PARAM)) {
+    if (ONLY_FEED_PARAM.equals(parametrizedUriExtractor.getParams())) {
       uriExtractor = new FeedUriExtractor(baseUri.replace("{feed}", "%s"));
     }
     return uriExtractor;
