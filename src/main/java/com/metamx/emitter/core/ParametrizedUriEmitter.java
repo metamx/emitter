@@ -2,6 +2,7 @@ package com.metamx.emitter.core;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableSet;
 import com.metamx.common.lifecycle.Lifecycle;
 import com.metamx.common.lifecycle.LifecycleStart;
 import com.metamx.common.lifecycle.LifecycleStop;
@@ -12,10 +13,24 @@ import java.io.Flushable;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ParametrizedUriEmitter implements Flushable, Closeable, Emitter
 {
+  private static final Set<String> ONLY_FEED_PARAM = ImmutableSet.of("feed");
+
+  private static UriExtractor makeUriExtractor(ParametrizedUriEmitterConfig config)
+  {
+    final String baseUri = config.getRecipientBaseUrlPattern();
+    final ParametrizedUriExtractor parametrizedUriExtractor = new ParametrizedUriExtractor(baseUri);
+    UriExtractor uriExtractor = parametrizedUriExtractor;
+    if (ONLY_FEED_PARAM.equals(parametrizedUriExtractor.getParams())) {
+      uriExtractor = new FeedUriExtractor(baseUri.replace("{feed}", "%s"));
+    }
+    return uriExtractor;
+  }
+
   /**
    * Type should be ConcurrentHashMap, not {@link java.util.concurrent.ConcurrentMap}, because the latter _doesn't_
    * guarantee that the lambda passed to {@link java.util.Map#computeIfAbsent} is executed at most once.
@@ -26,6 +41,15 @@ public class ParametrizedUriEmitter implements Flushable, Closeable, Emitter
   private final HttpClient client;
   private final ObjectMapper jsonMapper;
   private final ParametrizedUriEmitterConfig config;
+
+  public ParametrizedUriEmitter(
+      ParametrizedUriEmitterConfig config,
+      HttpClient client,
+      ObjectMapper jsonMapper
+  )
+  {
+    this(config, client, jsonMapper, makeUriExtractor(config));
+  }
 
   public ParametrizedUriEmitter(
       ParametrizedUriEmitterConfig config,
