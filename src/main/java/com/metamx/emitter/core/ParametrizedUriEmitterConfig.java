@@ -6,12 +6,14 @@ import javax.validation.constraints.NotNull;
 
 public class ParametrizedUriEmitterConfig
 {
+  private static final BaseHttpEmittingConfig DEFAULT_HTTP_EMITTING_CONFIG = new BaseHttpEmittingConfig();
+
   @NotNull
   @JsonProperty
   private String recipientBaseUrlPattern;
 
   @JsonProperty("httpEmitting")
-  private BaseHttpEmittingConfig httpEmittingConfig;
+  private BaseHttpEmittingConfig httpEmittingConfig = DEFAULT_HTTP_EMITTING_CONFIG;
 
   public String getRecipientBaseUrlPattern()
   {

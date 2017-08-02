@@ -31,13 +31,13 @@ public class ParametrizedUriEmitterConfigTest
   public void testSettingEverything()
   {
     final Properties props = new Properties();
-    props.setProperty("com.metamx.emitter.flushMillis", "1");
-    props.setProperty("com.metamx.emitter.flushCount", "2");
-    props.setProperty("com.metamx.emitter.basicAuthentication", "a:b");
-    props.setProperty("com.metamx.emitter.batchingStrategy", "NEWLINES");
-    props.setProperty("com.metamx.emitter.maxBatchSize", "4");
-    props.setProperty("com.metamx.emitter.maxBufferSize", "8");
-    props.setProperty("com.metamx.emitter.flushTimeOut", "1000");
+    props.setProperty("com.metamx.emitter.httpEmitting.flushMillis", "1");
+    props.setProperty("com.metamx.emitter.httpEmitting.flushCount", "2");
+    props.setProperty("com.metamx.emitter.httpEmitting.basicAuthentication", "a:b");
+    props.setProperty("com.metamx.emitter.httpEmitting.batchingStrategy", "NEWLINES");
+    props.setProperty("com.metamx.emitter.httpEmitting.maxBatchSize", "4");
+    props.setProperty("com.metamx.emitter.httpEmitting.maxBufferSize", "8");
+    props.setProperty("com.metamx.emitter.httpEmitting.flushTimeOut", "1000");
 
     final ObjectMapper objectMapper = new ObjectMapper();
     final ParametrizedUriEmitterConfig paramConfig = objectMapper.convertValue(Emitters.makeCustomFactoryMap(props), ParametrizedUriEmitterConfig.class);
