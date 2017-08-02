@@ -9,7 +9,6 @@ import com.metamx.http.client.HttpClient;
 
 public class HttpEmitterFactory extends HttpEmitterConfig implements EmitterFactory
 {
-  public HttpEmitterFactory() {}
 
   @Override
   public Emitter makeEmitter(ObjectMapper objectMapper, HttpClient httpClient, Lifecycle lifecycle)
