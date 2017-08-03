@@ -15,6 +15,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ParametrizedUriEmitter implements Flushable, Closeable, Emitter
 {
@@ -37,6 +38,8 @@ public class ParametrizedUriEmitter implements Flushable, Closeable, Emitter
    */
   private final ConcurrentHashMap<URI, HttpPostEmitter> emitters = new ConcurrentHashMap<>();
   private final UriExtractor uriExtractor;
+  private final AtomicBoolean startFlag = new AtomicBoolean(false);
+  private final AtomicBoolean stopFlag = new AtomicBoolean(false);
   private final Lifecycle innerLifecycle = new Lifecycle();
   private final HttpClient client;
   private final ObjectMapper jsonMapper;
@@ -68,6 +71,9 @@ public class ParametrizedUriEmitter implements Flushable, Closeable, Emitter
   @LifecycleStart
   public void start()
   {
+    if (startFlag.getAndSet(true)) {
+      return; // Already started.
+    }
     try {
       innerLifecycle.start();
     }
@@ -115,7 +121,9 @@ public class ParametrizedUriEmitter implements Flushable, Closeable, Emitter
   @LifecycleStop
   public void close() throws IOException
   {
-    innerLifecycle.stop();
+    if (!stopFlag.getAndSet(true)) {
+      innerLifecycle.stop();
+    }
   }
 
   @Override
