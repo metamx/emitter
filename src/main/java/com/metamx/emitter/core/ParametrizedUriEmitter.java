@@ -39,7 +39,8 @@ public class ParametrizedUriEmitter implements Flushable, Closeable, Emitter
   private final ConcurrentHashMap<URI, HttpPostEmitter> emitters = new ConcurrentHashMap<>();
   private final UriExtractor uriExtractor;
   private final AtomicBoolean startFlag = new AtomicBoolean(false);
-  private final AtomicBoolean stopFlag = new AtomicBoolean(false);
+  private final Object closeLock = new Object();
+  private boolean closed = false;
   private final Lifecycle innerLifecycle = new Lifecycle();
   private final HttpClient client;
   private final ObjectMapper jsonMapper;
@@ -121,7 +122,13 @@ public class ParametrizedUriEmitter implements Flushable, Closeable, Emitter
   @LifecycleStop
   public void close() throws IOException
   {
-    if (!stopFlag.getAndSet(true)) {
+    // Use full synchronized instead of atomic flag, because otherwise some thread may think that the emitter is already
+    // closed while it's in the process of closing by another thread.
+    synchronized (closeLock) {
+      if (closed) {
+        return;
+      }
+      closed = true;
       innerLifecycle.stop();
     }
   }
