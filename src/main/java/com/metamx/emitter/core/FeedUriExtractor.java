@@ -17,4 +17,12 @@ public class FeedUriExtractor implements UriExtractor
   {
     return new URI(String.format(uriPattern, event.getFeed()));
   }
+
+  @Override
+  public String toString()
+  {
+    return "FeedUriExtractor{" +
+           "uriPattern='" + uriPattern + '\'' +
+           '}';
+  }
 }

@@ -25,7 +25,7 @@
     </parent>
 
     <artifactId>emitter</artifactId>
-    <version>0.6.0-rc4-SNAPSHOT</version>
+    <version>0.6.0-rc5-SNAPSHOT</version>
 
     <name>${project.groupId}:${project.artifactId}</name>
     <description>Emit events to logger or an http service</description>

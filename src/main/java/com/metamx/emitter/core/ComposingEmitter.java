@@ -101,4 +101,12 @@ public class ComposingEmitter implements Emitter
       throw new IOException("failed to close one or more emitters");
     }
   }
+
+  @Override
+  public String toString()
+  {
+    return "ComposingEmitter{" +
+           "emitters=" + emitters +
+           '}';
+  }
 }

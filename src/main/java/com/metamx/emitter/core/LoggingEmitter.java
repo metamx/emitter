@@ -160,6 +160,15 @@ public class LoggingEmitter implements Emitter
     }
   }
 
+  @Override
+  public String toString()
+  {
+    return "LoggingEmitter{" +
+           "log=" + log +
+           ", level=" + level +
+           '}';
+  }
+
   public enum Level {
     TRACE,
     DEBUG,

@@ -98,4 +98,23 @@ public class BaseHttpEmittingConfig
   public ContentEncoding getContentEncoding() {
     return contentEncoding;
   }
+
+  @Override
+  public String toString()
+  {
+    return "BaseHttpEmittingConfig{" + toStringBase() + '}';
+  }
+
+  protected String toStringBase()
+  {
+    return
+        "flushMillis=" + flushMillis +
+        ", flushCount=" + flushCount +
+        ", flushTimeOut=" + flushTimeOut +
+        ", basicAuthentication='" + basicAuthentication + '\'' +
+        ", batchingStrategy=" + batchingStrategy +
+        ", maxBatchSize=" + maxBatchSize +
+        ", maxBufferSize=" + maxBufferSize +
+        ", contentEncoding=" + contentEncoding;
+  }
 }
