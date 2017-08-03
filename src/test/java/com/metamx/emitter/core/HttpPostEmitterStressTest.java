@@ -58,15 +58,13 @@ public class HttpPostEmitterStressTest
   @Test
   public void eventCountBased() throws InterruptedException, IOException
   {
-    HttpEmitterConfig config = new HttpEmitterConfig(
-        100,
-        4,
-        "http://foo.bar",
-        null,
-        BatchingStrategy.ONLY_EVENTS,
-        1024 * 1024,
-        1024 * 1024
-    );
+    HttpEmitterConfig config = new HttpEmitterConfig.Builder("http://foo.bar")
+        .setFlushMillis(100)
+        .setFlushCount(4)
+        .setBatchingStrategy(BatchingStrategy.ONLY_EVENTS)
+        .setMaxBatchSize(1024 * 1024)
+        .setMaxBufferSize(1024 * 1024)
+        .build();
     final HttpPostEmitter emitter = new HttpPostEmitter(config, httpClient, objectMapper);
     int nThreads = Runtime.getRuntime().availableProcessors() * 2;
     final List<IntList> eventsPerThread = new ArrayList<>(nThreads);

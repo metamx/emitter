@@ -17,196 +17,33 @@
 package com.metamx.emitter.core;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import javax.validation.constraints.Min;
+
 import javax.validation.constraints.NotNull;
 
 /**
  */
-public class HttpEmitterConfig
+public class HttpEmitterConfig extends BaseHttpEmittingConfig
 {
-  private static final long DEFAULT_FLUSH_MILLIS = 60 * 1000;
-  private static final int DEFAULT_FLUSH_COUNTS = 500;
-  private static final String DEFAULT_RECIPIENT_BASE_URL = null;
-  private static final int DEFAULT_MAX_BATCH_SIZE = 5 * 1024 * 1024;
-  private static final long DEFAULT_MAX_BUFFER_SIZE = 250 * 1024 * 1024;
-  private static final long DEFAULT_FLUSH_TIME_OUT = Long.MAX_VALUE; // do not time out in case flushTimeOut is not set
-  private static final String DEFAULT_BASIC_AUTHENTICATION = null;
-  private static final BatchingStrategy DEFAULT_BATCHING_STRATEGY = BatchingStrategy.ARRAY;
-  private static final ContentEncoding DEFAULT_CONTENT_ENCODING = null;
-
-  @Min(1)
-  @JsonProperty
-  private long flushMillis = DEFAULT_FLUSH_MILLIS;
-
-  @Min(0)
-  @JsonProperty
-  private int flushCount = DEFAULT_FLUSH_COUNTS;
-
-  @Min(0)
-  @JsonProperty
-  private long flushTimeOut = DEFAULT_FLUSH_TIME_OUT;
-
   @NotNull
   @JsonProperty
-  private String recipientBaseUrl = DEFAULT_RECIPIENT_BASE_URL;
-
-  @JsonProperty
-  private String basicAuthentication = DEFAULT_BASIC_AUTHENTICATION;
-
-  @JsonProperty
-  private BatchingStrategy batchingStrategy = DEFAULT_BATCHING_STRATEGY;
-
-  @Min(0)
-  @JsonProperty
-  private int maxBatchSize = DEFAULT_MAX_BATCH_SIZE;
-
-  @Min(0)
-  @JsonProperty
-  private long maxBufferSize = DEFAULT_MAX_BUFFER_SIZE;
-
-  @JsonProperty
-  private ContentEncoding contentEncoding = DEFAULT_CONTENT_ENCODING;
+  String recipientBaseUrl = null;
 
   /**
    * For JSON deserialization only. In other cases use {@link Builder}
    */
   public HttpEmitterConfig() {}
 
-  /**
-   * @deprecated use {@link Builder}
-   */
-  @Deprecated
-  public HttpEmitterConfig(
-      long flushMillis,
-      int flushCount,
-      String recipientBaseUrl
-  )
+  public HttpEmitterConfig(BaseHttpEmittingConfig base, String recipientBaseUrl)
   {
-    this(
-        flushMillis,
-        flushCount,
-        DEFAULT_FLUSH_TIME_OUT,
-        recipientBaseUrl,
-        DEFAULT_BASIC_AUTHENTICATION,
-        DEFAULT_BATCHING_STRATEGY,
-        DEFAULT_MAX_BATCH_SIZE,
-        DEFAULT_MAX_BUFFER_SIZE
-    );
-  }
-
-  /**
-   * @deprecated use {@link Builder}
-   */
-  @Deprecated
-  public HttpEmitterConfig(
-      long flushMillis,
-      int flushCount,
-      String recipientBaseUrl,
-      int maxBatchSize,
-      long maxBufferSize
-  )
-  {
-    this(
-        flushMillis,
-        flushCount,
-        DEFAULT_FLUSH_TIME_OUT,
-        recipientBaseUrl,
-        DEFAULT_BASIC_AUTHENTICATION,
-        DEFAULT_BATCHING_STRATEGY,
-        maxBatchSize,
-        maxBufferSize
-    );
-  }
-
-  /**
-   * @deprecated use {@link Builder}
-   */
-  @Deprecated
-  public HttpEmitterConfig(
-      long flushMillis,
-      int flushCount,
-      String recipientBaseUrl,
-      String basicAuthentication,
-      BatchingStrategy batchingStrategy,
-      int maxBatchSize,
-      long maxBufferSize
-  )
-  {
-    this(
-        flushMillis,
-        flushCount,
-        DEFAULT_FLUSH_TIME_OUT,
-        recipientBaseUrl,
-        basicAuthentication,
-        batchingStrategy,
-        maxBatchSize,
-        maxBufferSize
-    );
-  }
-
-  /**
-   * @deprecated use {@link Builder}
-   */
-  @Deprecated
-  public HttpEmitterConfig(
-      long flushMillis,
-      int flushCount,
-      long flushTimeOut,
-      String recipientBaseUrl,
-      String basicAuthentication,
-      BatchingStrategy batchingStrategy,
-      int maxBatchSize,
-      long maxBufferSize
-  )
-  {
-    this(
-        flushMillis,
-        flushCount,
-        flushTimeOut,
-        recipientBaseUrl,
-        basicAuthentication,
-        batchingStrategy,
-        maxBatchSize,
-        maxBufferSize,
-        DEFAULT_CONTENT_ENCODING
-    );
-  }
-
-  private HttpEmitterConfig(
-      long flushMillis,
-      int flushCount,
-      long flushTimeOut,
-      String recipientBaseUrl,
-      String basicAuthentication,
-      BatchingStrategy batchingStrategy,
-      int maxBatchSize,
-      long maxBufferSize,
-      ContentEncoding contentEncoding
-  )
-  {
-    this.flushMillis = flushMillis;
-    this.flushCount = flushCount;
-    this.flushTimeOut = flushTimeOut;
+    this.flushMillis = base.flushMillis;
+    this.flushCount = base.flushCount;
+    this.flushTimeOut = base.flushTimeOut;
     this.recipientBaseUrl = recipientBaseUrl;
-    this.basicAuthentication = basicAuthentication;
-    this.batchingStrategy = batchingStrategy;
-    this.maxBatchSize = maxBatchSize;
-    this.maxBufferSize = maxBufferSize;
-    this.contentEncoding = contentEncoding;
-  }
-
-  public long getFlushMillis()
-  {
-    return flushMillis;
-  }
-
-  public int getFlushCount()
-  {
-    return flushCount;
-  }
-
-  public long getFlushTimeOut() {
-    return flushTimeOut;
+    this.basicAuthentication = base.basicAuthentication;
+    this.batchingStrategy = base.batchingStrategy;
+    this.maxBatchSize = base.maxBatchSize;
+    this.maxBufferSize = base.maxBufferSize;
+    this.contentEncoding = base.contentEncoding;
   }
 
   public String getRecipientBaseUrl()
@@ -214,59 +51,11 @@ public class HttpEmitterConfig
     return recipientBaseUrl;
   }
 
-  public String getBasicAuthentication()
+  public static class Builder extends HttpEmitterConfig
   {
-    return basicAuthentication;
-  }
-
-  public BatchingStrategy getBatchingStrategy()
-  {
-    return batchingStrategy;
-  }
-
-  public int getMaxBatchSize()
-  {
-    return maxBatchSize;
-  }
-
-  public long getMaxBufferSize()
-  {
-    return maxBufferSize;
-  }
-
-  public ContentEncoding getContentEncoding() {
-    return contentEncoding;
-  }
-
-  public static class Builder
-  {
-    private long flushMillis = DEFAULT_FLUSH_MILLIS;
-    private int flushCount = DEFAULT_FLUSH_COUNTS;
-    private String recipientBaseUrl = DEFAULT_RECIPIENT_BASE_URL;
-    private long flushTimeOut = DEFAULT_FLUSH_TIME_OUT;
-    private String basicAuthentication = DEFAULT_BASIC_AUTHENTICATION;
-    private BatchingStrategy batchingStrategy = DEFAULT_BATCHING_STRATEGY;
-    private int maxBatchSize = DEFAULT_MAX_BATCH_SIZE;
-    private long maxBufferSize = DEFAULT_MAX_BUFFER_SIZE;
-    private ContentEncoding contentEncoding = DEFAULT_CONTENT_ENCODING;
-
     public Builder(String recipientBaseUrl)
     {
       this.recipientBaseUrl = recipientBaseUrl;
-    }
-
-    public Builder copyWithRecipientBaseUrl(String recipientBaseUrl)
-    {
-      Builder b = new Builder(recipientBaseUrl);
-      b.setBasicAuthentication(this.basicAuthentication)
-       .setBatchingStrategy(this.batchingStrategy)
-       .setContentEncoding(this.contentEncoding)
-       .setFlushCount(this.flushCount)
-       .setFlushMillis(this.flushMillis)
-       .setFlushTimeOut(this.flushTimeOut)
-       .setMaxBatchSize(this.maxBatchSize)
-       .setMaxBufferSize(this.maxBufferSize);
-      return b;
     }
 
     public Builder setFlushMillis(long flushMillis)
@@ -319,17 +108,7 @@ public class HttpEmitterConfig
 
     public HttpEmitterConfig build()
     {
-      return new HttpEmitterConfig(
-          flushMillis,
-          flushCount,
-          flushTimeOut,
-          recipientBaseUrl,
-          basicAuthentication,
-          batchingStrategy,
-          maxBatchSize,
-          maxBufferSize,
-          contentEncoding
-      );
+      return new HttpEmitterConfig(this, recipientBaseUrl);
     }
   }
 }
