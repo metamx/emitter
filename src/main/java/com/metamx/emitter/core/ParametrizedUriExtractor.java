@@ -47,4 +47,13 @@ public class ParametrizedUriExtractor implements UriExtractor
     }
     return new URI(processedUri);
   }
+
+  @Override
+  public String toString()
+  {
+    return "ParametrizedUriExtractor{" +
+           "uriPattern='" + uriPattern + '\'' +
+           ", params=" + params +
+           '}';
+  }
 }

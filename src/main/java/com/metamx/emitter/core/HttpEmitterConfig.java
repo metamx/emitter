@@ -51,6 +51,15 @@ public class HttpEmitterConfig extends BaseHttpEmittingConfig
     return recipientBaseUrl;
   }
 
+  @Override
+  public String toString()
+  {
+    return "HttpEmitterConfig{" +
+           toStringBase() +
+           ", recipientBaseUrl=\'" + recipientBaseUrl + '\'' +
+           '}';
+  }
+
   public static class Builder extends HttpEmitterConfig
   {
     public Builder(String recipientBaseUrl)

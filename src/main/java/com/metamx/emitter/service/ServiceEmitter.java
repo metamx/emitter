@@ -87,4 +87,13 @@ public class ServiceEmitter implements Emitter
   {
     emitter.close();
   }
+
+  @Override
+  public String toString()
+  {
+    return "ServiceEmitter{" +
+           "serviceDimensions=" + serviceDimensions +
+           ", emitter=" + emitter +
+           '}';
+  }
 }
