@@ -293,6 +293,14 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
     }
   }
 
+  @Override
+  public String toString()
+  {
+    return "HttpPostEmitter{" +
+           "config=" + config +
+           '}';
+  }
+
   private class EmittingThread extends Thread
   {
     private final ArrayDeque<FailedBuffer> failedBuffers = new ArrayDeque<>();
@@ -518,7 +526,7 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
       if (response.getStatus().getCode() == 413) {
         throw new ISE(
             "Received HTTP status 413 from [%s]. Batch size of [%d] may be too large, "
-            + "try adjusting com.metamx.emitter.http.maxBatchSizeBatch",
+            + "try adjusting maxBatchSizeBatch property",
             config.getRecipientBaseUrl(),
             config.getMaxBatchSize()
         );

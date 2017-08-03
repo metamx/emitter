@@ -24,4 +24,13 @@ public class ParametrizedUriEmitterConfig
   {
     return new HttpEmitterConfig(httpEmittingConfig, baseUri);
   }
+
+  @Override
+  public String toString()
+  {
+    return "ParametrizedUriEmitterConfig{" +
+           "recipientBaseUrlPattern='" + recipientBaseUrlPattern + '\'' +
+           ", httpEmittingConfig=" + httpEmittingConfig +
+           '}';
+  }
 }

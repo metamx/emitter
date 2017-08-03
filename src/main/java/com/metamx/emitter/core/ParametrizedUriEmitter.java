@@ -155,4 +155,14 @@ public class ParametrizedUriEmitter implements Flushable, Closeable, Emitter
       throw Throwables.propagate(thrown);
     }
   }
+
+  @Override
+  public String toString()
+  {
+    return "ParametrizedUriEmitter{" +
+           "emitters=" + emitters.keySet() +
+           ", uriExtractor=" + uriExtractor +
+           ", config=" + config +
+           '}';
+  }
 }
