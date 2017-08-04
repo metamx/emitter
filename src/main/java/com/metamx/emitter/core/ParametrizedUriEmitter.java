@@ -15,7 +15,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ParametrizedUriEmitter implements Flushable, Closeable, Emitter
 {
@@ -38,8 +37,8 @@ public class ParametrizedUriEmitter implements Flushable, Closeable, Emitter
    */
   private final ConcurrentHashMap<URI, HttpPostEmitter> emitters = new ConcurrentHashMap<>();
   private final UriExtractor uriExtractor;
-  private final AtomicBoolean startFlag = new AtomicBoolean(false);
-  private final Object closeLock = new Object();
+  private final Object startCloseLock = new Object();
+  private boolean started = false;
   private boolean closed = false;
   private final Lifecycle innerLifecycle = new Lifecycle();
   private final HttpClient client;
@@ -72,17 +71,22 @@ public class ParametrizedUriEmitter implements Flushable, Closeable, Emitter
   @LifecycleStart
   public void start()
   {
-    if (startFlag.getAndSet(true)) {
-      return; // Already started.
-    }
-    try {
-      innerLifecycle.start();
-    }
-    catch (RuntimeException e) {
-      throw e;
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
+    // Use full synchronized instead of atomic flag, because otherwise some thread may think that the emitter is already
+    // started while it's in the process of starting by another thread.
+    synchronized (startCloseLock) {
+      if (started) {
+        return;
+      }
+      started = true;
+      try {
+        innerLifecycle.start();
+      }
+      catch (RuntimeException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 
@@ -124,7 +128,7 @@ public class ParametrizedUriEmitter implements Flushable, Closeable, Emitter
   {
     // Use full synchronized instead of atomic flag, because otherwise some thread may think that the emitter is already
     // closed while it's in the process of closing by another thread.
-    synchronized (closeLock) {
+    synchronized (startCloseLock) {
       if (closed) {
         return;
       }
