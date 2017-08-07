@@ -8,6 +8,7 @@ import com.metamx.common.lifecycle.LifecycleStart;
 import com.metamx.common.lifecycle.LifecycleStop;
 import com.metamx.http.client.HttpClient;
 
+import javax.annotation.concurrent.GuardedBy;
 import java.io.Closeable;
 import java.io.Flushable;
 import java.io.IOException;
@@ -38,7 +39,9 @@ public class ParametrizedUriEmitter implements Flushable, Closeable, Emitter
   private final ConcurrentHashMap<URI, HttpPostEmitter> emitters = new ConcurrentHashMap<>();
   private final UriExtractor uriExtractor;
   private final Object startCloseLock = new Object();
+  @GuardedBy("startCloseLock")
   private boolean started = false;
+  @GuardedBy("startCloseLock")
   private boolean closed = false;
   private final Lifecycle innerLifecycle = new Lifecycle();
   private final HttpClient client;
