@@ -6,6 +6,7 @@ import com.google.common.collect.ImmutableSet;
 import com.metamx.common.lifecycle.Lifecycle;
 import com.metamx.common.lifecycle.LifecycleStart;
 import com.metamx.common.lifecycle.LifecycleStop;
+import com.metamx.common.logger.Logger;
 import com.metamx.http.client.HttpClient;
 
 import javax.annotation.concurrent.GuardedBy;
@@ -19,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class ParametrizedUriEmitter implements Flushable, Closeable, Emitter
 {
+  private static final Logger log = new Logger(ParametrizedUriEmitter.class);
   private static final Set<String> ONLY_FEED_PARAM = ImmutableSet.of("feed");
 
   private static UriExtractor makeUriExtractor(ParametrizedUriEmitterConfig config)
@@ -100,28 +102,31 @@ public class ParametrizedUriEmitter implements Flushable, Closeable, Emitter
       URI uri = uriExtractor.apply(event);
       HttpPostEmitter emitter = emitters.get(uri);
       if (emitter == null) {
-        emitter = emitters.computeIfAbsent(uri, u -> {
-          try {
-            return innerLifecycle.addMaybeStartManagedInstance(
-                new HttpPostEmitter(
-                    config.buildHttpEmitterConfig(u.toString()),
-                    client,
-                    jsonMapper
-                )
-            );
-          }
-          catch (Exception e) {
-            throw Throwables.propagate(e);
-          }
-        });
+        try {
+          emitter = emitters.computeIfAbsent(uri, u -> {
+            try {
+              return innerLifecycle.addMaybeStartManagedInstance(
+                  new HttpPostEmitter(
+                      config.buildHttpEmitterConfig(u.toString()),
+                      client,
+                      jsonMapper
+                  )
+              );
+            }
+            catch (Exception e) {
+              throw Throwables.propagate(e);
+            }
+          });
+        }
+        catch (RuntimeException e) {
+          log.error(e, "Error while creating or starting an HttpPostEmitter for URI[%s]", uri);
+          return;
+        }
       }
       emitter.emit(event);
     }
     catch (URISyntaxException e) {
-      throw new RuntimeException(String.format("Failed to extract URI for event: %s", event.toMap().toString()));
-    }
-    catch (Exception e) {
-      throw Throwables.propagate(e);
+      log.error(e, "Failed to extract URI for event[%s]", event.toMap());
     }
   }
 
