@@ -20,6 +20,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.metamx.common.lifecycle.LifecycleStart;
 import com.metamx.common.lifecycle.LifecycleStop;
+import com.metamx.common.logger.Logger;
 import com.metamx.emitter.core.Emitter;
 import com.metamx.emitter.core.Event;
 
@@ -27,6 +28,8 @@ import java.io.IOException;
 
 public class ServiceEmitter implements Emitter
 {
+  private static final Logger log = new Logger(ServiceEmitter.class);
+
   private final ImmutableMap<String, String> serviceDimensions;
   private final Emitter emitter;
 
@@ -61,15 +64,22 @@ public class ServiceEmitter implements Emitter
     return serviceDimensions.get("host");
   }
 
+  @Override
   @LifecycleStart
   public void start()
   {
     emitter.start();
   }
 
+  @Override
   public void emit(Event event)
   {
-    emitter.emit(event);
+    try {
+      emitter.emit(event);
+    }
+    catch (RuntimeException e) {
+      log.error(e, "Event emitting failed");
+    }
   }
 
   public void emit(ServiceEventBuilder builder)
@@ -77,11 +87,13 @@ public class ServiceEmitter implements Emitter
     emit(builder.build(serviceDimensions));
   }
 
+  @Override
   public void flush() throws IOException
   {
     emitter.flush();
   }
 
+  @Override
   @LifecycleStop
   public void close() throws IOException
   {
