@@ -25,7 +25,7 @@
     </parent>
 
     <artifactId>emitter</artifactId>
-    <version>0.6.0</version>
+    <version>0.6.1-SNAPSHOT</version>
 
     <name>${project.groupId}:${project.artifactId}</name>
     <description>Emit events to logger or an http service</description>
@@ -51,7 +51,7 @@
         <connection>scm:git:ssh://git@github.com/metamx/emitter.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/metamx/emitter.git</developerConnection>
         <url>https://github.com/metamx/emitter.git</url>
-        <tag>emitter-0.6.0</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <properties>
